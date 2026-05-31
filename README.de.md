@@ -199,5 +199,5 @@ Code-Verzeichnisse (`cmd/`, `proto/`, `internal/`, `mappings/`,
 
 ## Lizenz
 
-Lizenzwahl steht noch aus. Die Schwesterprojekte nutzen MIT; finale
-Entscheidung und ein `LICENSE`-File kommen mit dem ersten M1-Slice.
+Dieses Projekt steht unter der MIT-Lizenz. Details stehen in
+[`LICENSE`](LICENSE).

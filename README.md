@@ -200,5 +200,5 @@ the structure and key facts; for deep-dive content, consult
 
 ## License
 
-License selection is pending. The sibling projects use MIT; a final
-decision and a `LICENSE` file land with the first M1 slice.
+This project is licensed under the MIT License. Details are in
+[`LICENSE`](LICENSE).
