@@ -26,7 +26,17 @@ In diesem Dokument haben die in Großbuchstaben geschriebenen Schlüsselwörter 
 
 Klein geschriebene Formen ("muss", "soll", "kann") sind beschreibend und nicht normativ.
 
-MVP-blockierend sind ausschließlich `MUSS`-Anforderungen aus Kapitel 4 (MVP-Umfang) sowie Anforderungen, die ausdrücklich den Satzbestandteil `Der MVP MUSS` oder eine Use-Case-Kennzeichnung `(MVP)` tragen. `SOLLTE`- und `KANN`-Anforderungen blockieren die MVP-Abnahme nicht, auch wenn sie den MVP erwähnen.
+MVP-blockierend sind ausschließlich:
+
+- `MUSS`-Anforderungen aus Kapitel 4 (MVP-Umfang),
+- Anforderungen, die ausdrücklich den Satzbestandteil `Der MVP MUSS` tragen,
+- Tabellenzeilen der Klasse `MUSS`, deren Ziel mit `MVP:` beginnt,
+- Use Cases mit Kennzeichnung `(MVP)`,
+- die Abnahmekriterien `RPC-ACCEPT-001`, `RPC-ACCEPT-002`, `RPC-ACCEPT-003`, `RPC-ACCEPT-004`, `RPC-ACCEPT-005`, `RPC-ACCEPT-008` und `RPC-ACCEPT-009`.
+
+`SOLLTE`- und `KANN`-Anforderungen blockieren die MVP-Abnahme nicht, auch wenn sie den MVP erwähnen.
+
+`RPC-ACCEPT-006` und `RPC-ACCEPT-007` sind nur für als produktionsfähig deklarierte Netzwerk-/Cloud-HSM- oder Cloud-KMS-Profile abnahmebindend. Sie blockieren den MVP nicht, solange solche Profile nicht ausdrücklich in den MVP-Release-Scope aufgenommen werden.
 
 Anforderungen ohne MVP-Kennzeichnung beschreiben den produktweiten Zielzustand. Sie werden abnahmebindend, sobald die betroffene Domäne oder Fähigkeit in einen Release-Scope aufgenommen wird.
 
@@ -127,7 +137,7 @@ Ein Backend-Profil oder Adapter DARF nur als produktionsfähig deklariert werden
 
 Der MVP MUSS zunächst die PKCS#11-API semantisch 1:1 abbilden und aus offiziellen OASIS-PKCS#11-Quellen reproduzierbar generierbare IDL-, Client-Stub-, Server-Stub- und Runtime-Source-Artefakte für Go, Java, Kotlin und C# erzeugen können. Cloud-KMS, Netzwerk-HSM und Cloud-HSM sind gleichrangige Ziel-Domänen, blockieren den MVP aber nicht.
 
-Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go/Java/Kotlin/C# und führt eine Signatur-Operation über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
+Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go/Java/Kotlin/C# und führt die funktionale MVP-Abnahme gemäß `RPC-ACCEPT-001` über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
 
 ### RPC-ZB-002 – Produktvision
 
@@ -192,14 +202,14 @@ Sekundäre Umgebungen, die im CI mitgeführt werden SOLLEN:
 - dokumentierte Beispielprofile für Netzwerk-HSM und Cloud-HSM,
 - Mock- oder Sandbox-Backends für Cloud-KMS-Profile,
 - Linux ARM64 als Best-Effort,
-- generierte Client- und Server-Stubs für Go, Java, Kotlin und C# ohne laufendes HSM.
+- generierte Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go, Java, Kotlin und C# ohne laufendes HSM.
 
 ### RPC-PE-004 – Anwendungsfälle
 
 Folgende Use Cases MÜSSEN unterstützt werden:
 
 - **UC-1 PKCS#11 Generate-IDL (MVP)**: Generator erzeugt eine versionierte Protobuf-IDL aus OASIS-Headern und Mapping-Datei.
-- **UC-2 PKCS#11 Generate-Stubs (MVP)**: Generator-Workflow erzeugt Go-, Java-, Kotlin- und C#-Client- und Server-Stubs.
+- **UC-2 PKCS#11 Generate-Stubs/Runtime (MVP)**: Generator-Workflow erzeugt Go-, Java-, Kotlin- und C#-Client- und Server-Stubs sowie Runtime-Source-Artefakte.
 - **UC-3 PKCS#11 List-Slots (MVP)**: Client ruft `C_GetSlotList` und `C_GetTokenInfo` über RPC auf.
 - **UC-4 PKCS#11 Open-Session/Login (MVP)**: Client eröffnet eine Session und meldet sich gemäß konfiguriertem Credential-Modell mit `C_Login` an.
 - **UC-5 PKCS#11 Find-Object (MVP)**: Client führt `C_FindObjectsInit`/`C_FindObjects`/`C_FindObjectsFinal` aus.
@@ -300,13 +310,13 @@ Akzeptanz: Golden-File-Test vergleicht die aus dem MVP Surface Profile generiert
 
 Der MVP MUSS einen Go-Referenzserver bereitstellen, der die Kern-API gegen SoftHSM v2 ausführen kann.
 
-Akzeptanz: Ein Integrationstest initialisiert einen SoftHSM-Token, meldet sich gemäß SoftHSM-Profil an, findet einen privaten Schlüssel und erzeugt über RPC eine gültige Signatur. Dieser Integrationstest ist zugleich der funktionale Abnahmebeleg aus `RPC-ACCEPT-001`.
+Akzeptanz: Ein Integrationstest gemäß `RPC-ACCEPT-001` initialisiert einen SoftHSM-Token, deckt die 19 MVP-Funktionen aus `RPC-MVP-001` ab und erzeugt über RPC eine gültige Signatur. Dieser Integrationstest ist zugleich der funktionale Abnahmebeleg aus `RPC-ACCEPT-001`.
 
-### RPC-MVP-003 – Client- und Server-Stubs
+### RPC-MVP-003 – Client-, Server-Stubs und Runtime-Source
 
-Der MVP MUSS Go-, Java-, Kotlin- und C#-Client- und Server-Stubs aus der Protobuf-IDL erzeugen. Server-Stubs umfassen mindestens die sprachtypischen Service-Interfaces, abstrakten Basisklassen oder Registrierungsartefakte, auf deren Basis eine Serverimplementierung die generierten RPC-Methoden implementieren kann.
+Der MVP MUSS Go-, Java-, Kotlin- und C#-Client- und Server-Stubs aus der Protobuf-IDL sowie Runtime-Source-Artefakte für die Nutzung dieser Stubs erzeugen. Server-Stubs umfassen mindestens die sprachtypischen Service-Interfaces, abstrakten Basisklassen oder Registrierungsartefakte, auf deren Basis eine Serverimplementierung die generierten RPC-Methoden implementieren kann. Runtime-Source-Artefakte umfassen mindestens sprachspezifische Hilfen für Client- und Servernutzung, Returncode-Behandlung, Transportauswahl und Test-Harnesses gemäß `RPC-FA-GEN-008`.
 
-Akzeptanz: CI-Build kompiliert alle generierten Client- und Server-Stubs ohne manuelle Nachbearbeitung. Für Go MUSS der Referenzserver gegen die generierten Go-Server-Stubs bauen. Für Java, Kotlin und C# MUSS mindestens ein Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Artefakte bauen; ein vollständiges PKCS#11-Backend ist dafür nicht erforderlich.
+Akzeptanz: CI-Build kompiliert alle generierten Client- und Server-Stubs sowie Runtime-Source-Artefakte ohne manuelle Nachbearbeitung. Für Go MUSS der Referenzserver gegen die generierten Go-Server-Stubs und Go-Runtime-Source bauen. Für Java, Kotlin und C# MUSS mindestens ein Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server- und Runtime-Artefakte bauen; ein vollständiges PKCS#11-Backend ist dafür nicht erforderlich.
 
 ### RPC-MVP-004 – Returncode-Treue
 
@@ -448,7 +458,7 @@ Das Generator-Tool SOLL Runtime-Source optional in einer hexagonalen Adapter-Str
 
 #### RPC-FA-GEN-010 – Artefaktauswahl
 
-Das Generator-Tool MUSS explizit auswählen lassen, welche Artefaktklassen erzeugt werden: mindestens `idl`, `client-stubs`, `server-stubs`, `runtime-source`, `hexagonal-runtime-source`, `examples` und `all`. Die Auswahl von `runtime-source` oder `hexagonal-runtime-source` DARF die fachliche IDL und das Mapping nicht verändern.
+Das Generator-Tool MUSS explizit auswählen lassen, welche Artefaktklassen erzeugt werden: mindestens `idl`, `client-stubs`, `server-stubs`, `runtime-source`, `examples` und `all`. Wenn die optionale hexagonale Runtime-Source aus `RPC-FA-GEN-009` umgesetzt ist, MUSS zusätzlich `hexagonal-runtime-source` auswählbar sein. Die Auswahl von `runtime-source` oder, sofern verfügbar, `hexagonal-runtime-source` DARF die fachliche IDL und das Mapping nicht verändern.
 
 ### 6.3 PKCS#11-Kernsemantik
 
@@ -596,7 +606,7 @@ Die Codec-Auswahl MUSS explizit über Tool- oder Profilwerte erfolgen, z. B. `tc
 
 ### RPC-API-TRANSPORT-004 – Optionale TLS/mTLS-Terminierung
 
-IDL, Mapping, Client-Stubs und Server-Stubs MÜSSEN unabhängig von TLS/mTLS generierbar sein. TLS 1.3 und mTLS KÖNNEN für gRPC und TCP-RPC als Laufzeitoption aktiviert werden. Wenn TLS/mTLS aktiviert ist, MUSS der Server die geprüfte Client-Identität transportneutral in einen internen Principal abbilden, damit Autorisierung, Session-Besitz und Audit nicht vom konkreten Transportprofil abhängen.
+IDL, Mapping, Client-Stubs, Server-Stubs und Runtime-Source-Artefakte MÜSSEN unabhängig von TLS/mTLS generierbar sein. TLS 1.3 und mTLS KÖNNEN für gRPC und TCP-RPC als Laufzeitoption aktiviert werden. Wenn TLS/mTLS aktiviert ist, MUSS der Server die geprüfte Client-Identität transportneutral in einen internen Principal abbilden, damit Autorisierung, Session-Besitz und Audit nicht vom konkreten Transportprofil abhängen.
 
 ### RPC-API-TRANSPORT-005 – Tool- und Profilschalter
 
@@ -607,6 +617,8 @@ Generator- und Server-Tools MÜSSEN Transportprofile, TCP-RPC-Payload-Codec und 
 Wenn ein Profil Client-Identitäten verwendet, MUSS die Identitätsquelle explizit konfiguriert werden; Auto-Detection ist ausgeschlossen. Zulässige initiale Werte sind `mtls-subject`, `header` und `none`.
 
 Für `security=mtls` MUSS `identity.source=mtls-subject` oder eine dokumentierte äquivalente Zertifikatsableitung verwendet werden. Für `security=external`, etwa bei L7-Service-Mesh- oder Reverse-Proxy-Terminierung, MUSS `identity.source=header` eine nicht leere Peer-Allowlist besitzen, bevor Header-Werte als Client-Identität akzeptiert werden. Ohne Peer-Allowlist MUSS der Serverstart fehlschlagen.
+
+`identity.source=none` bedeutet einen explizit anonymen, nicht authentisierten Principal und DARF nur in lokalem Entwicklungs-, Test- oder klar dokumentiertem Single-Tenant-Betrieb verwendet werden. Ein als produktionsfähig deklariertes Profil DARF `identity.source=none` NICHT verwenden, wenn es mehrere Clients, clientbezogene Autorisierung, clientbezogene Session-Isolation oder auditierbare Client-Identitäten zusagt. Produktionsfähig deklarierte Profile MÜSSEN eine authentisierte Identitätsquelle konfigurieren, z. B. `mtls-subject`, `header` mit Peer-Allowlist oder einen in der Technischen Spezifikation definierten gleichwertigen Authentisierungsmechanismus. Client-spezifische Policies und Session-Isolation DÜRFEN mit `identity.source=none` nicht als erfüllt deklariert werden.
 
 ### RPC-API-TRANSPORT-007 – Betriebsmodi für Terminierung
 
@@ -690,6 +702,8 @@ Transportverschlüsselung MUSS profilabhängig konfigurierbar sein. TLS/mTLS DAR
 #### RPC-NFA-SEC-002 – Client-Authentisierung
 
 Client-Authentisierung MUSS profilabhängig konfigurierbar sein. mTLS KANN als Verfahren für gRPC- und TCP-RPC-Profile verwendet werden. Wenn ein Profil Client-Authentisierung aktiviert, MUSS es dokumentieren, wie Client-Identitäten authentisiert und auf serverseitige Principals abgebildet werden.
+
+Produktionsfähig deklarierte Profile MÜSSEN Client-Authentisierung aktivieren, sobald mehr als ein Client, clientbezogene Autorisierung, clientbezogene Session-Isolation oder auditierbare Client-Identität Bestandteil der Betriebszusage ist. Andernfalls MUSS das Profil ausdrücklich als Single-Tenant-Profil ohne clientbezogene Sicherheitszusage dokumentiert sein und darf nicht zur Erfüllung von clientbezogenen Autorisierungsanforderungen herangezogen werden.
 
 #### RPC-NFA-SEC-003 – PIN-Handling
 
@@ -977,7 +991,7 @@ Für den Betrieb ist ein PKCS#11-Modul mit erreichbarem Token verfügbar.
 
 ### RPC-ASSUMP-002 – Client vertraut Server
 
-Clients vertrauen dem RPC-Server als Policy- und HSM-Zugriffsschicht. Private Schlüssel verlassen das HSM nicht, aber der Server darf Operationen auslösen.
+Clients vertrauen dem RPC-Server als Policy- und HSM-Zugriffsschicht. Im MVP verlassen private und geheime Schlüsselwerte das HSM nicht; der Server darf jedoch Operationen auslösen. Spätere Profile dürfen extrahierbare private oder geheime Attribute nur über eine explizite serverseitige Export-Policy gemäß `RPC-FA-CRYPTO-004` freigeben und müssen diese Abweichung in Profil, Audit und Abnahmebeleg dokumentieren.
 
 ### RPC-ASSUMP-003 – OASIS-Quellen bleiben versionierbar
 
@@ -999,15 +1013,15 @@ PKCS#11 v2.40 ist kein MVP-Ziel; eine Unterstützung erfolgt – wenn überhaupt
 
 ### RPC-ACCEPT-001 – Funktionale Abnahme
 
-Ein automatisierter Test MUSS über RPC gegen SoftHSM Slots listen, eine Session öffnen, Login durchführen, einen Key finden und eine Signatur erzeugen. Der Test MUSS erfolgreiche PKCS#11-Operationen mit `CKR_OK` prüfen.
+Ein automatisierter Test MUSS über RPC gegen SoftHSM die 19 MVP-Funktionen aus `RPC-MVP-001` abdecken. Der Test MUSS mindestens initialisieren, Informationen zu Library, Slots, Token und Mechanisms abrufen, eine Session öffnen, Login durchführen, Attribute eines bekannten Objekts abfragen, einen Key finden, eine Signatur erzeugen, Zufallsbytes erzeugen, Logout durchführen, die Session schließen und finalisieren. Für jede MVP-Funktion MUSS der Test entweder `CKR_OK` oder einen bewusst provozierten, fachlich erwarteten `CK_RV` prüfen.
 
 ### RPC-ACCEPT-002 – Generator-Abnahme
 
-Ein CI-Job MUSS IDL, Client-Stubs und Server-Stubs aus gepinnten Quellen generieren und gegen Golden Files prüfen. Der Job MUSS fehlschlagen, wenn das Quellenmanifest, die Mapping-Datei oder ein generiertes Artefakt nicht zum eingecheckten Referenzstand passt.
+Ein CI-Job MUSS IDL, Client-Stubs, Server-Stubs und Runtime-Source-Artefakte aus gepinnten Quellen generieren und gegen Golden Files prüfen. Der Job MUSS fehlschlagen, wenn das Quellenmanifest, die Mapping-Datei oder ein generiertes Artefakt nicht zum eingecheckten Referenzstand passt.
 
 ### RPC-ACCEPT-003 – Sprach-Abnahme
 
-Go-, Java-, Kotlin- und C#-Artefakte MÜSSEN mindestens einen Client-Smoke-Test gegen den Go-Referenzserver nachweisen. Zusätzlich MUSS Go den Referenzserver gegen die generierten Server-Stubs bauen; Java, Kotlin und C# MÜSSEN einen kompilierbaren Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Stubs nachweisen.
+Go-, Java-, Kotlin- und C#-Artefakte MÜSSEN mindestens einen Client-Smoke-Test gegen den Go-Referenzserver nachweisen. Zusätzlich MUSS Go den Referenzserver gegen die generierten Server-Stubs und Runtime-Source-Artefakte bauen; Java, Kotlin und C# MÜSSEN einen kompilierbaren Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Stubs und Runtime-Source-Artefakte nachweisen.
 
 ### RPC-ACCEPT-004 – Security-Abnahme
 
