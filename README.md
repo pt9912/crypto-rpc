@@ -57,6 +57,10 @@ first M1 slice — tracked as
   headers; identical inputs produce byte-identical artefacts
   ([`RPC-FA-GEN-003`](spec/lastenheft.md)); golden-file tests guard
   against drift.
+- **Profile-limited PKCS#11 surface.** The active API profile decides
+  which PKCS#11 functions enter the IDL and stubs. The MVP profile
+  includes only the 19 core functions from `RPC-MVP-001`
+  ([`RPC-FA-IDL-007`](spec/lastenheft.md)).
 - **Transport-neutral contract.** gRPC and TCP-RPC are transport
   profiles over the same business semantics. TLS/mTLS is a runtime
   profile option, not a prerequisite for IDL, mapping, or stub
@@ -66,8 +70,8 @@ first M1 slice — tracked as
 - **Runtime source, not a black-box SDK.** The generator can emit
   readable runtime source, including an optional hexagonal adapter
   structure with transport, config, observability/audit, and backend
-  adapters ([`RPC-FA-GEN-007`](spec/lastenheft.md),
-  [`RPC-FA-GEN-008`](spec/lastenheft.md)).
+  adapters ([`RPC-FA-GEN-008`](spec/lastenheft.md),
+  [`RPC-FA-GEN-009`](spec/lastenheft.md)).
 - **Return-code fidelity.** Every business response carries the
   numeric `CK_RV`; transport errors are reserved for RPC/network/
   authentication failures, not for normal PKCS#11 errors
@@ -106,7 +110,8 @@ As of **2026-05-31**:
   runtime source
   ([`RPC-MVP-003`](spec/lastenheft.md),
   [`RPC-NONGOAL-007`](spec/lastenheft.md),
-  [`RPC-FA-GEN-007`](spec/lastenheft.md),
+  [`RPC-FA-IDL-007`](spec/lastenheft.md),
+  [`RPC-FA-GEN-008`](spec/lastenheft.md),
   [`RPC-API-TRANSPORT-*`](spec/lastenheft.md)), release-scope/profile-
   status vocabulary added ([`RPC-LESE-007`](spec/lastenheft.md),
   [`RPC-PUE-004`](spec/lastenheft.md),
@@ -139,7 +144,7 @@ land with M1.
 | Generator + IDL | `Pending` | `RPC-FA-GEN-*`, `RPC-FA-IDL-*`; activates with M1 |
 | Transport profiles | `Pending` | `RPC-API-TRANSPORT-*`; gRPC and TCP-RPC with Protobuf-Binary plus optional MessagePack for TCP-RPC and optional `none`/`tls`/`mtls`/`external` security modes |
 | Reference server (Go) | `Pending` | `RPC-MVP-002`, `RPC-TECH-003`; activates with M1 |
-| Language stubs + runtime source (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-FA-GEN-007..009`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; activates with M1 |
+| Language stubs + runtime source (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-FA-IDL-007`, `RPC-FA-GEN-008..010`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; activates with M1 |
 
 ## MVP Scope
 
@@ -149,6 +154,9 @@ chapter 4:
 - generate a Protobuf IDL `cryptorpc.pkcs11.v1` from pinned OASIS
   PKCS#11 v3.2 headers covering 19 core functions
   ([`RPC-MVP-001`](spec/lastenheft.md))
+- restrict the generated PKCS#11 surface through the active MVP API
+  profile; functions outside the profile do not enter the MVP IDL
+  ([`RPC-FA-IDL-007`](spec/lastenheft.md))
 - ship a Go reference server running the core API against SoftHSM v2
   ([`RPC-MVP-002`](spec/lastenheft.md))
 - emit compilable Go, Java, Kotlin, and C# client and server stubs
@@ -158,7 +166,7 @@ chapter 4:
   ([`RPC-NONGOAL-007`](spec/lastenheft.md))
 - optionally emit runtime source, including hexagonal adapter scaffolds
   for ports, gRPC/TCP-RPC driving adapters, config, observability/audit,
-  and backend adapters ([`RPC-FA-GEN-007..009`](spec/lastenheft.md),
+  and backend adapters ([`RPC-FA-GEN-008..010`](spec/lastenheft.md),
   [`RPC-ARCH-004`](spec/lastenheft.md))
 - support gRPC and TCP-RPC transport profiles with explicit
   `tcp-rpc.codec=protobuf|messagepack`,
@@ -180,8 +188,9 @@ Acceptance covered by `RPC-ACCEPT-001…005`.
 ## Planned Functional Areas
 
 - generator pipeline `crypto-rpc-gen` (Go) — parses OASIS headers,
-  applies a hand-curated mapping file, emits canonical Protobuf IDL,
-  per-language stubs, and optional runtime-source artefacts
+  applies a hand-curated mapping file and active API profile, emits
+  canonical Protobuf IDL, per-language stubs, and optional
+  runtime-source artefacts
 - transport profiles for gRPC and framed TCP-RPC with Protobuf-Binary
   plus optional MessagePack payloads and explicit runtime switches for
   transport security and identity source

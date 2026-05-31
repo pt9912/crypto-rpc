@@ -57,6 +57,10 @@ M1-Slice — getriggert in
   erzeugt; identische Eingaben produzieren byte-identische Artefakte
   ([`RPC-FA-GEN-003`](spec/lastenheft.md)); Golden-File-Tests sichern
   gegen Drift.
+- **Per Profil begrenzte PKCS#11-Fläche.** Das aktive API-Profil
+  entscheidet, welche PKCS#11-Funktionen in IDL und Stubs gelangen.
+  Das MVP-Profil enthält nur die 19 Kernfunktionen aus `RPC-MVP-001`
+  ([`RPC-FA-IDL-007`](spec/lastenheft.md)).
 - **Transportneutraler Vertrag.** gRPC und TCP-RPC sind
   Transportprofile über derselben fachlichen Semantik. TLS/mTLS ist
   eine Laufzeitoption pro Profil, keine Voraussetzung für IDL-,
@@ -66,8 +70,8 @@ M1-Slice — getriggert in
 - **Runtime-Source statt Black-Box-SDK.** Der Generator kann lesbaren
   Runtime-Quellcode ausgeben, optional auch in hexagonaler Adapter-
   Struktur mit Transport-, Config-, Observability-/Audit- und Backend-
-  Adaptern ([`RPC-FA-GEN-007`](spec/lastenheft.md),
-  [`RPC-FA-GEN-008`](spec/lastenheft.md)).
+  Adaptern ([`RPC-FA-GEN-008`](spec/lastenheft.md),
+  [`RPC-FA-GEN-009`](spec/lastenheft.md)).
 - **Returncode-Treue.** Jede fachliche Response trägt den numerischen
   `CK_RV`; Transportfehler bleiben RPC-/Netz-/Authentisierungs-Fehlern
   vorbehalten, nicht regulären PKCS#11-Fehlern
@@ -108,7 +112,8 @@ Stand **2026-05-31**:
   Runtime-Source erweitert
   ([`RPC-MVP-003`](spec/lastenheft.md),
   [`RPC-NONGOAL-007`](spec/lastenheft.md),
-  [`RPC-FA-GEN-007`](spec/lastenheft.md),
+  [`RPC-FA-IDL-007`](spec/lastenheft.md),
+  [`RPC-FA-GEN-008`](spec/lastenheft.md),
   [`RPC-API-TRANSPORT-*`](spec/lastenheft.md)), Release-Scope/Profilstatus-
   Vokabular ergänzt ([`RPC-LESE-007`](spec/lastenheft.md),
   [`RPC-PUE-004`](spec/lastenheft.md),
@@ -141,7 +146,7 @@ CI-Workflow; alle drei kommen mit M1.
 | Generator + IDL | `Pending` | `RPC-FA-GEN-*`, `RPC-FA-IDL-*`; aktiviert mit M1 |
 | Transportprofile | `Pending` | `RPC-API-TRANSPORT-*`; gRPC und TCP-RPC mit Protobuf-Binary plus optional MessagePack für TCP-RPC und optionalen Security-Modi `none`/`tls`/`mtls`/`external` |
 | Referenzserver (Go) | `Pending` | `RPC-MVP-002`, `RPC-TECH-003`; aktiviert mit M1 |
-| Sprach-Stubs + Runtime-Source (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-FA-GEN-007..009`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; aktiviert mit M1 |
+| Sprach-Stubs + Runtime-Source (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-FA-IDL-007`, `RPC-FA-GEN-008..010`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; aktiviert mit M1 |
 
 ## MVP-Scope
 
@@ -151,6 +156,9 @@ Kapitel 4:
 - eine Protobuf-IDL `cryptorpc.pkcs11.v1` aus gepinnten OASIS-PKCS#11-
   v3.2-Headern für 19 Kernfunktionen generieren
   ([`RPC-MVP-001`](spec/lastenheft.md))
+- die generierte PKCS#11-Fläche über das aktive MVP-API-Profil
+  begrenzen; Funktionen außerhalb des Profils gelangen nicht in die
+  MVP-IDL ([`RPC-FA-IDL-007`](spec/lastenheft.md))
 - einen Go-Referenzserver liefern, der die Kern-API gegen SoftHSM v2
   ausführt ([`RPC-MVP-002`](spec/lastenheft.md))
 - kompilierbare Go-, Java-, Kotlin- und C#-Client- **und** Server-Stubs
@@ -161,7 +169,7 @@ Kapitel 4:
 - optional Runtime-Source ausgeben, inklusive hexagonaler Adapter-
   Scaffolds für Ports, gRPC-/TCP-RPC-Driving-Adapter, Konfiguration,
   Observability/Audit und Backend-Adapter
-  ([`RPC-FA-GEN-007..009`](spec/lastenheft.md),
+  ([`RPC-FA-GEN-008..010`](spec/lastenheft.md),
   [`RPC-ARCH-004`](spec/lastenheft.md))
 - gRPC- und TCP-RPC-Transportprofile mit expliziten
   `tcp-rpc.codec=protobuf|messagepack`-, `security=none|tls|mtls|external`-
@@ -183,9 +191,9 @@ Abnahme über `RPC-ACCEPT-001…005`.
 ## Geplante Funktionsbereiche
 
 - Generator-Pipeline `crypto-rpc-gen` (Go) — parst OASIS-Header,
-  wendet eine handgepflegte Mapping-Datei an, emittiert kanonische
-  Protobuf-IDL, Per-Sprach-Stubs und optionale Runtime-Source-
-  Artefakte
+  wendet eine handgepflegte Mapping-Datei und das aktive API-Profil an,
+  emittiert kanonische Protobuf-IDL, Per-Sprach-Stubs und optionale
+  Runtime-Source-Artefakte
 - Transportprofile für gRPC und framed TCP-RPC mit Protobuf-Binary plus
   optionalen MessagePack-Payloads und expliziten Laufzeitschaltern für
   Transport-Security und Identitätsquelle

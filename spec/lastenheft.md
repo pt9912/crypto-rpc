@@ -290,11 +290,11 @@ Eine gemeinsame Infrastruktur für Transport, Authentisierung, Observability ode
 
 ### RPC-MVP-001 – Generator für Kern-API
 
-Der MVP MUSS aus OASIS-PKCS#11-Headern und einer Mapping-Datei eine Protobuf-IDL für einen Kernumfang erzeugen.
+Der MVP MUSS aus OASIS-PKCS#11-Headern, einer Mapping-Datei und einem maschinenlesbaren PKCS#11-API-Profil eine Protobuf-IDL für einen Kernumfang erzeugen.
 
 Kernumfang: `C_Initialize`, `C_Finalize`, `C_GetInfo`, `C_GetSlotList`, `C_GetSlotInfo`, `C_GetTokenInfo`, `C_GetMechanismList`, `C_GetMechanismInfo`, `C_OpenSession`, `C_CloseSession`, `C_Login`, `C_Logout`, `C_FindObjectsInit`, `C_FindObjects`, `C_FindObjectsFinal`, `C_GetAttributeValue`, `C_SignInit`, `C_Sign`, `C_GenerateRandom` (19 Funktionen).
 
-Akzeptanz: Golden-File-Test vergleicht die generierte IDL mit einem eingecheckten Referenzartefakt.
+Akzeptanz: Golden-File-Test vergleicht die aus dem MVP-API-Profil generierte IDL mit einem eingecheckten Referenzartefakt.
 
 ### RPC-MVP-002 – Go-Referenzserver gegen SoftHSM
 
@@ -398,6 +398,14 @@ PKCS#11-Handles (`CK_SESSION_HANDLE`, `CK_OBJECT_HANDLE`) MÜSSEN im RPC als opa
 
 Die IDL MUSS für Byte-Felder und wiederholte Felder dokumentierte Größenlimits abbilden oder referenzieren können. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
 
+#### RPC-FA-IDL-007 – Einschränkbarer PKCS#11-API-Umfang
+
+Der PKCS#11-RPC-Umfang MUSS über ein maschinenlesbares API-Profil einschränkbar sein. Das API-Profil MUSS mindestens Funktionen als `include`, `exclude`, `generated-but-unsupported` oder `extension` klassifizieren können.
+
+Der Generator MUSS für ein aktives API-Profil nur die als `include` oder explizit als `extension` aktivierten Funktionen in die fachliche IDL und die Sprach-Stubs aufnehmen. Ausgeschlossene Funktionen DÜRFEN NICHT stillschweigend in die IDL gelangen. `generated-but-unsupported` DARF nur verwendet werden, wenn eine Methode aus Kompatibilitätsgründen in der IDL sichtbar sein soll, aber zur Laufzeit deterministisch als nicht unterstützt beantwortet wird.
+
+Das MVP-API-Profil MUSS genau den Kernumfang aus `RPC-MVP-001` als `include` enthalten. Nicht im MVP enthaltene PKCS#11-Funktionen MÜSSEN in der Kompatibilitätsmatrix als außerhalb des MVP, ausgeschlossen oder späteres Profilziel ausgewiesen werden.
+
 ### 6.2 Generator
 
 #### RPC-FA-GEN-001 – Header-Parser
@@ -424,17 +432,21 @@ Der Generator MUSS Golden-File-Tests für IDL, Konstanten und ausgewählte Servi
 
 Der Generator MUSS Mapping-Dateien gegen die gepinnten OASIS-Quellen validieren. Unbekannte Funktionen, nicht mehr passende Struct-Felder, widersprüchliche Parameter-Richtungen, unreferenzierte Sonderregeln und nicht deklarierte manuelle Overrides MÜSSEN den Generatorlauf abbrechen.
 
-#### RPC-FA-GEN-007 – Runtime-Source-Ausgabe
+#### RPC-FA-GEN-007 – API-Profil-Validierung
+
+Der Generator MUSS das aktive PKCS#11-API-Profil gegen die gepinnten OASIS-Quellen und die Mapping-Datei validieren. Ein Profil MUSS fehlschlagen, wenn es unbekannte Funktionen referenziert, eine Funktion zugleich einschließt und ausschließt, eine aktivierte Funktion ohne ausreichendes Mapping enthält oder eine `extension` ohne eigenen Namespace bzw. explizite Kennzeichnung aktiviert.
+
+#### RPC-FA-GEN-008 – Runtime-Source-Ausgabe
 
 Der Generator MUSS Runtime-Code als Source-Artefakt je unterstützter Zielsprache ausgeben können. Runtime-Source-Artefakte umfassen sprachspezifische Hilfen für Client- und Servernutzung, Transportauswahl, Fehler-/Returncode-Behandlung, Konfiguration und Test-Harnesses, soweit diese nicht rein fachliche PKCS#11-Semantik verändern.
 
 Runtime-Source-Artefakte MÜSSEN als lesbarer Quellcode ausgegeben werden und DÜRFEN NICHT ausschließlich als Binärpaket, Container-Image oder extern aufzulösende Abhängigkeit bereitgestellt werden. Sie MÜSSEN dieselben Lizenz-, Provenienz- und Reproduzierbarkeitsregeln erfüllen wie generierte IDL- und Stub-Artefakte.
 
-#### RPC-FA-GEN-008 – Hexagonale Runtime-Option
+#### RPC-FA-GEN-009 – Hexagonale Runtime-Option
 
 Das Generator-Tool SOLL Runtime-Source optional in einer hexagonalen Adapter-Struktur ausgeben können. Diese Option MUSS mindestens getrennte Ports für fachliche PKCS#11-Operationen, Transportadapter für gRPC und TCP-RPC, Konfigurationsadapter, Observability-/Audit-Adapter und Backend-Adapter vorsehen. Die hexagonale Struktur DARF NICHT Voraussetzung für die Nutzung der generierten IDL, Client-Stubs oder Server-Stubs sein.
 
-#### RPC-FA-GEN-009 – Artefaktauswahl
+#### RPC-FA-GEN-010 – Artefaktauswahl
 
 Das Generator-Tool MUSS explizit auswählen lassen, welche Artefaktklassen erzeugt werden: mindestens `idl`, `client-stubs`, `server-stubs`, `runtime-source`, `hexagonal-runtime-source`, `examples` und `all`. Die Auswahl von `runtime-source` oder `hexagonal-runtime-source` DARF die fachliche IDL und das Mapping nicht verändern.
 
@@ -1023,7 +1035,7 @@ Ein automatisierter oder reproduzierbarer Starttest MUSS zeigen, dass Profile ih
 
 ### RPC-MENGE-001 – MVP-Umfang API
 
-Der MVP umfasst mindestens 19 PKCS#11-Funktionen aus `RPC-MVP-001`.
+Der MVP umfasst genau die im MVP-API-Profil als `include` markierten 19 PKCS#11-Funktionen aus `RPC-MVP-001`. Weitere PKCS#11-Funktionen DÜRFEN die MVP-IDL nicht erweitern, solange sie nicht in ein neues oder erweitertes API-Profil aufgenommen werden.
 
 ### RPC-MENGE-002 – Sessions
 
