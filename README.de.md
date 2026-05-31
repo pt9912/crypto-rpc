@@ -4,11 +4,12 @@
 
 `crypto-rpc` ist ein Open-Source-Monorepo für RPC-Abstraktionen über
 Kryptografie-Backends. Es modelliert vier gleichrangige Domänen —
-PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM — und stellt sie über
-stabile, sprachneutrale Protobuf/gRPC-Kontrakte bereit. Der MVP bildet
-die PKCS#11-Schnittstelle semantisch 1:1 ab, generiert aus den
-offiziellen OASIS-Headern, mit einem Go-Referenzserver und generierten
-Go-/Java-/Kotlin-/C#-Client- und Server-Stubs.
+PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM — und stellt stabile,
+sprachneutrale Protobuf-Kontrakte für gRPC- und TCP-RPC-
+Transportprofile bereit. Der MVP bildet die PKCS#11-Schnittstelle
+semantisch 1:1 ab, generiert aus den offiziellen OASIS-Headern, mit
+einem Go-Referenzserver sowie generierten Go-/Java-/Kotlin-/C#-Client-
+Stubs, Server-Stubs und Runtime-Source.
 
 ## Für wen?
 
@@ -51,11 +52,21 @@ M1-Slice — getriggert in
   getrennten `cryptorpc.kms.v1`-Paket und wird nie stillschweigend
   als PKCS#11 emuliert ([`RPC-NONGOAL-006`](spec/lastenheft.md),
   [`RPC-FA-BACKEND-004`](spec/lastenheft.md)).
-- **Reproduzierbarer Generator.** IDL und Sprach-Stubs werden aus
-  gepinnten OASIS-PKCS#11-Headern erzeugt; identische Eingaben
-  produzieren byte-identische Artefakte
+- **Reproduzierbarer Generator.** IDL, Sprach-Stubs und optionale
+  Runtime-Source-Artefakte werden aus gepinnten OASIS-PKCS#11-Headern
+  erzeugt; identische Eingaben produzieren byte-identische Artefakte
   ([`RPC-FA-GEN-003`](spec/lastenheft.md)); Golden-File-Tests sichern
   gegen Drift.
+- **Transportneutraler Vertrag.** gRPC und TCP-RPC sind
+  Transportprofile über derselben fachlichen Semantik. TLS/mTLS ist
+  eine Laufzeitoption pro Profil, keine Voraussetzung für IDL-,
+  Mapping- oder Stub-Generierung
+  ([`RPC-API-TRANSPORT-*`](spec/lastenheft.md)).
+- **Runtime-Source statt Black-Box-SDK.** Der Generator kann lesbaren
+  Runtime-Quellcode ausgeben, optional auch in hexagonaler Adapter-
+  Struktur mit Transport-, Config-, Observability-/Audit- und Backend-
+  Adaptern ([`RPC-FA-GEN-007`](spec/lastenheft.md),
+  [`RPC-FA-GEN-008`](spec/lastenheft.md)).
 - **Returncode-Treue.** Jede fachliche Response trägt den numerischen
   `CK_RV`; Transportfehler bleiben RPC-/Netz-/Authentisierungs-Fehlern
   vorbehalten, nicht regulären PKCS#11-Fehlern
@@ -91,13 +102,17 @@ Build-Pattern), nicht funktional.
 Stand **2026-05-31**:
 
 - **Lastenheft v0.2 (`Entwurf, fachlich verfeinert`)** — committet;
-  Stubs auf Client + Server über alle vier Sprachen erweitert
+  Artefakte auf Client-Stubs, Server-Stubs, Runtime-Source,
+  Transportprofile (`grpc`, `tcp-rpc`) und optionale hexagonale
+  Runtime-Source erweitert
   ([`RPC-MVP-003`](spec/lastenheft.md),
-  [`RPC-NONGOAL-007`](spec/lastenheft.md)), Release-Scope/Profilstatus-
+  [`RPC-NONGOAL-007`](spec/lastenheft.md),
+  [`RPC-FA-GEN-007`](spec/lastenheft.md),
+  [`RPC-API-TRANSPORT-*`](spec/lastenheft.md)), Release-Scope/Profilstatus-
   Vokabular ergänzt ([`RPC-LESE-007`](spec/lastenheft.md),
   [`RPC-PUE-004`](spec/lastenheft.md),
-  [`RPC-FA-BACKEND-005`](spec/lastenheft.md)), ~20 neue normative Punkte
-  quer durch IDL/Generator/Security/Audit/Ops/Abnahme. Code-Review von
+  [`RPC-FA-BACKEND-005`](spec/lastenheft.md)), neue normative Punkte
+  quer durch IDL/Generator/Transport/Security/Audit/Ops/Abnahme. Code-Review von
   ADR-0001 hat 5 Findings produziert (separat zu adressieren).
 - **Dokumentations-/Planungs-Harness** — bootstrappt: ADR-0001
   `Accepted`, Planning-Lifecycle-Verzeichnisse mit README-Stubs,
@@ -123,8 +138,9 @@ CI-Workflow; alle drei kommen mit M1.
 | Roadmap | `Entwurf` | [`docs/plan/planning/in-progress/roadmap.md`](docs/plan/planning/in-progress/roadmap.md) — M1 PKCS#11-MVP → M2 Netzwerk-HSM → M3 Cloud-HSM → M4 Cloud-KMS |
 | Build-/Container-Harness | `Open` | [`open/001-build-container-harness.md`](docs/plan/planning/open/001-build-container-harness.md) — Analyse der Schwesterprojekt-Pattern, drei Optionen, Aktivierungstrigger |
 | Generator + IDL | `Pending` | `RPC-FA-GEN-*`, `RPC-FA-IDL-*`; aktiviert mit M1 |
+| Transportprofile | `Pending` | `RPC-API-TRANSPORT-*`; gRPC und TCP-RPC mit optionalen Security-Modi `none`/`tls`/`mtls`/`external` |
 | Referenzserver (Go) | `Pending` | `RPC-MVP-002`, `RPC-TECH-003`; aktiviert mit M1 |
-| Sprach-Stubs (Go/Java/Kotlin/C#, Client + Server) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; aktiviert mit M1 |
+| Sprach-Stubs + Runtime-Source (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-FA-GEN-007..009`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; aktiviert mit M1 |
 
 ## MVP-Scope
 
@@ -141,6 +157,15 @@ Kapitel 4:
   Referenzserver gegen die generierten Server-Stubs, Java/Kotlin/C#
   brauchen nur einen Stub-Harness oder Mock-Server-Kontrakttest
   ([`RPC-NONGOAL-007`](spec/lastenheft.md))
+- optional Runtime-Source ausgeben, inklusive hexagonaler Adapter-
+  Scaffolds für Ports, gRPC-/TCP-RPC-Driving-Adapter, Konfiguration,
+  Observability/Audit und Backend-Adapter
+  ([`RPC-FA-GEN-007..009`](spec/lastenheft.md),
+  [`RPC-ARCH-004`](spec/lastenheft.md))
+- gRPC- und TCP-RPC-Transportprofile mit expliziten
+  `security=none|tls|mtls|external`- und `identity.source`-
+  Profileinstellungen unterstützen
+  ([`RPC-API-TRANSPORT-*`](spec/lastenheft.md))
 - PKCS#11-Returncodes (`CK_RV`) in jeder fachlichen Response erhalten
   ([`RPC-MVP-004`](spec/lastenheft.md))
 - serverseitig Session- und Handle-Zustand über mehrere RPC-Calls
@@ -158,7 +183,13 @@ Abnahme über `RPC-ACCEPT-001…005`.
 
 - Generator-Pipeline `crypto-rpc-gen` (Go) — parst OASIS-Header,
   wendet eine handgepflegte Mapping-Datei an, emittiert kanonische
-  Protobuf-IDL und Per-Sprach-Stubs
+  Protobuf-IDL, Per-Sprach-Stubs und optionale Runtime-Source-
+  Artefakte
+- Transportprofile für gRPC und framed TCP-RPC mit expliziten
+  Laufzeitschaltern für Transport-Security und Identitätsquelle
+- optionale hexagonale Runtime-Source mit Domain-Ports, Driving-
+  Adaptern, Driven-Backend-Adaptern, Konfiguration, Observability und
+  Audit-Integration
 - Referenzserver `server/pkcs11-go` (Go) mit `miekg/pkcs11`-Binding
 - Session-/Handle-Lifecycle mit Lease- und Idle-Timeout-Semantik
 - Mechanism- und Attribute-Modelle mit typsicheren Varianten für

@@ -5,10 +5,11 @@
 `crypto-rpc` is an open-source monorepo for RPC abstractions over
 cryptographic backends. It models four equally-ranked domains —
 PKCS#11, Cloud-KMS, Network-HSM, and Cloud-HSM — and exposes them
-through stable, language-neutral Protobuf/gRPC contracts. The MVP
-covers a semantically 1:1 PKCS#11 surface generated from the official
-OASIS headers, with a Go reference server and generated
-Go/Java/Kotlin/C# client and server stubs.
+through stable, language-neutral Protobuf contracts over gRPC and
+TCP-RPC transport profiles. The MVP covers a semantically 1:1 PKCS#11
+surface generated from the official OASIS headers, with a Go reference
+server plus generated Go/Java/Kotlin/C# client stubs, server stubs, and
+runtime source.
 
 ## Who is it for?
 
@@ -51,10 +52,20 @@ first M1 slice — tracked as
   `cryptorpc.kms.v1` package and is never silently emulated as PKCS#11
   ([`RPC-NONGOAL-006`](spec/lastenheft.md),
   [`RPC-FA-BACKEND-004`](spec/lastenheft.md)).
-- **Reproducible generator.** IDL and language stubs are generated
-  from pinned OASIS-PKCS#11 headers; identical inputs produce
-  byte-identical artefacts ([`RPC-FA-GEN-003`](spec/lastenheft.md));
-  golden-file tests guard against drift.
+- **Reproducible generator.** IDL, language stubs, and optional
+  runtime-source artefacts are generated from pinned OASIS-PKCS#11
+  headers; identical inputs produce byte-identical artefacts
+  ([`RPC-FA-GEN-003`](spec/lastenheft.md)); golden-file tests guard
+  against drift.
+- **Transport-neutral contract.** gRPC and TCP-RPC are transport
+  profiles over the same business semantics. TLS/mTLS is a runtime
+  profile option, not a prerequisite for IDL, mapping, or stub
+  generation ([`RPC-API-TRANSPORT-*`](spec/lastenheft.md)).
+- **Runtime source, not a black-box SDK.** The generator can emit
+  readable runtime source, including an optional hexagonal adapter
+  structure with transport, config, observability/audit, and backend
+  adapters ([`RPC-FA-GEN-007`](spec/lastenheft.md),
+  [`RPC-FA-GEN-008`](spec/lastenheft.md)).
 - **Return-code fidelity.** Every business response carries the
   numeric `CK_RV`; transport errors are reserved for RPC/network/
   authentication failures, not for normal PKCS#11 errors
@@ -88,13 +99,17 @@ patterns), not functional.
 As of **2026-05-31**:
 
 - **Lastenheft v0.2 (`Entwurf, fachlich verfeinert`)** — committed;
-  stubs widened to client + server across all four languages
+  artefacts widened to client stubs, server stubs, runtime source,
+  transport profiles (`grpc`, `tcp-rpc`), and optional hexagonal
+  runtime source
   ([`RPC-MVP-003`](spec/lastenheft.md),
-  [`RPC-NONGOAL-007`](spec/lastenheft.md)), release-scope/profile-
+  [`RPC-NONGOAL-007`](spec/lastenheft.md),
+  [`RPC-FA-GEN-007`](spec/lastenheft.md),
+  [`RPC-API-TRANSPORT-*`](spec/lastenheft.md)), release-scope/profile-
   status vocabulary added ([`RPC-LESE-007`](spec/lastenheft.md),
   [`RPC-PUE-004`](spec/lastenheft.md),
-  [`RPC-FA-BACKEND-005`](spec/lastenheft.md)), ~20 new normative items
-  across IDL/generator/security/audit/ops/acceptance. Code-review of
+  [`RPC-FA-BACKEND-005`](spec/lastenheft.md)), new normative items
+  across IDL/generator/transport/security/audit/ops/acceptance. Code-review of
   ADR-0001 ran and surfaced 5 findings (handled separately).
 - **Documentation/planning harness** — bootstrapped: ADR-0001
   `Accepted`, planning lifecycle directories with README stubs,
@@ -120,8 +135,9 @@ land with M1.
 | Roadmap | `Draft` | [`docs/plan/planning/in-progress/roadmap.md`](docs/plan/planning/in-progress/roadmap.md) — M1 PKCS#11-MVP → M2 Network-HSM → M3 Cloud-HSM → M4 Cloud-KMS |
 | Build/container harness | `Open` | [`open/001-build-container-harness.md`](docs/plan/planning/open/001-build-container-harness.md) — analysis of sibling-project patterns, three options, activation triggers |
 | Generator + IDL | `Pending` | `RPC-FA-GEN-*`, `RPC-FA-IDL-*`; activates with M1 |
+| Transport profiles | `Pending` | `RPC-API-TRANSPORT-*`; gRPC and TCP-RPC with optional `none`/`tls`/`mtls`/`external` security modes |
 | Reference server (Go) | `Pending` | `RPC-MVP-002`, `RPC-TECH-003`; activates with M1 |
-| Language stubs (Go/Java/Kotlin/C#, client + server) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; activates with M1 |
+| Language stubs + runtime source (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-FA-GEN-007..009`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; activates with M1 |
 
 ## MVP Scope
 
@@ -138,6 +154,13 @@ chapter 4:
   against the generated server stubs, Java/Kotlin/C# only need a stub
   harness or mock-server contract test
   ([`RPC-NONGOAL-007`](spec/lastenheft.md))
+- optionally emit runtime source, including hexagonal adapter scaffolds
+  for ports, gRPC/TCP-RPC driving adapters, config, observability/audit,
+  and backend adapters ([`RPC-FA-GEN-007..009`](spec/lastenheft.md),
+  [`RPC-ARCH-004`](spec/lastenheft.md))
+- support gRPC and TCP-RPC transport profiles with explicit
+  `security=none|tls|mtls|external` and `identity.source` profile
+  settings ([`RPC-API-TRANSPORT-*`](spec/lastenheft.md))
 - preserve PKCS#11 return codes (`CK_RV`) in every business response
   ([`RPC-MVP-004`](spec/lastenheft.md))
 - maintain server-side session and handle state across multiple RPC
@@ -154,8 +177,13 @@ Acceptance covered by `RPC-ACCEPT-001…005`.
 ## Planned Functional Areas
 
 - generator pipeline `crypto-rpc-gen` (Go) — parses OASIS headers,
-  applies a hand-curated mapping file, emits canonical Protobuf IDL
-  and per-language stubs
+  applies a hand-curated mapping file, emits canonical Protobuf IDL,
+  per-language stubs, and optional runtime-source artefacts
+- transport profiles for gRPC and framed TCP-RPC with explicit
+  runtime switches for transport security and identity source
+- optional hexagonal runtime source with domain ports, driving
+  adapters, driven backend adapters, configuration, observability, and
+  audit integration
 - reference server `server/pkcs11-go` (Go) with `miekg/pkcs11` binding
 - session/handle lifecycle with lease and idle-timeout semantics
 - mechanism and attribute models with type-safe variants for RSA-PSS,
