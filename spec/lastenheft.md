@@ -24,9 +24,9 @@ In diesem Dokument haben die in Großbuchstaben geschriebenen Schlüsselwörter 
 - **SOLLTE** / **SOLLEN** – geplante Eigenschaft; Abweichungen müssen begründet und dokumentiert werden.
 - **KANN** / **KÖNNEN** – optionale Eigenschaft ohne Abnahmeverpflichtung.
 
-Klein geschriebene Formen („muss", „soll", „kann") sind beschreibend und nicht normativ.
+Klein geschriebene Formen ("muss", "soll", "kann") sind beschreibend und nicht normativ.
 
-MVP-blockierend sind ausschließlich Anforderungen, die in Kapitel 4 (MVP-Umfang) explizit gelistet oder in ihrem Text mit dem Zusatz `MVP` versehen sind.
+MVP-blockierend sind ausschließlich `MUSS`-Anforderungen aus Kapitel 4 (MVP-Umfang) sowie Anforderungen, die ausdrücklich den Satzbestandteil `Der MVP MUSS` oder eine Use-Case-Kennzeichnung `(MVP)` tragen. `SOLLTE`- und `KANN`-Anforderungen blockieren die MVP-Abnahme nicht, auch wenn sie den MVP erwähnen.
 
 ### RPC-LESE-002 – Abnahme und Belegtypen
 
@@ -35,18 +35,22 @@ Eine Anforderung gilt nur dann als erfüllt, wenn der zugehörige Belegtyp im Re
 | Anforderungsklasse                  | Zulässiger Beleg                                                                   |
 | ----------------------------------- | ---------------------------------------------------------------------------------- |
 | Funktionale Anforderungen (`FA-*`)  | automatisierter Integrationstest gegen SoftHSM oder reproduzierbarer manueller Test |
-| Generator (`GEN-*`)                 | golden-file-Test für generierte IDL/Stubs plus Parser-Test gegen gepinnte OASIS-Quellen |
-| Protokoll (`PROTO-*`, `API-*`)      | Protobuf-Artefakt, generierte Sprach-Stubs und Kontrakttest                         |
+| Generator (`FA-GEN-*`)              | Golden-File-Test für generierte IDL/Stubs plus Parser-Test gegen gepinnte OASIS-Quellen |
+| Protokoll und API (`API-*`)         | Protobuf-Artefakt, generierte Sprach-Stubs und Kontrakttest                         |
+| Produkteinsatz und Use Cases (`PE-*`) | Trace auf funktionale Anforderungen oder automatisierter/reproduzierbarer Use-Case-Test |
+| Produktübersicht und Vertrauensgrenzen (`PUE-*`) | Architektur- oder Sicherheitsbeleg gemäß Inhalt der Anforderung                         |
 | Architektur (`ARCH-*`)              | Architekturentscheid (ADR) plus statischer Importcheck                             |
 | Prinzipien (`PRINC-*`)              | ADR plus Lint-/Architekturtest                                                     |
+| Technologie (`TECH-*`)              | ADR, Build-Konfiguration oder Abhängigkeitsbeleg                                    |
 | Performance (`NFA-PERF-*`)          | reproduzierbares Benchmark-Skript plus Messprotokoll für die Referenzumgebung      |
 | Sicherheit (`NFA-SEC-*`)            | automatisierter Test, Konfigurationsbeleg oder dokumentiertes Reviewprotokoll       |
 | Compliance (`COMP-*`)               | Verweis auf einschlägige Norm plus Konfigurations- oder Testbeleg                   |
-| Betrieb (`OPS-*`, `ENV-*`)          | dokumentiertes Runbook, Containerfile, Helm-Chart oder Skript im Repository        |
+| Betrieb und Konfiguration (`NFA-OPS-*`, `OPS-*`, `OPS-MON-*`, `OPS-CFG-*`, `ENV-*`, `API-CFG-*`) | dokumentiertes Runbook, Containerfile, Helm-Chart, Konfigurationsschema oder Skript im Repository |
 | Bedrohungsmodell (`THREAT-*`)       | dokumentierte Risiko- und Mitigationsanalyse im Sicherheitskonzept                  |
 | Abnahmekriterien (`ACCEPT-*`)       | im Repository vorhandenes Abnahmeartefakt (Test, Skript, Demo-Lauf)                |
+| Mengengerüst (`MENGE-*`)            | Test-, Benchmark-, Build- oder Profilbeleg gemäß genannter Dimension                |
 | Übergreifende Anforderungen (`ZB-*`, `MVP-*`, `NONGOAL-*`) | Beleg gemäß thematisch passender Klasse oben (z. B. Funktional, Generator, Architektur); Akzeptanz ist in der Anforderung selbst genannt |
-| Informative Abschnitte (`LESE-*`, `PE-*`, `PUE-*`, `RISK-*`, `ASSUMP-*`, `MENGE-*`, `GLOSS-*`, `REF-*`) | beschreibend; kein eigener Beleg gefordert. Akzeptanz erfolgt mittelbar über die referenzierten normativen IDs |
+| Kontext- und Hilfsabschnitte (`LESE-*`, `RISK-*`, `ASSUMP-*`, `GLOSS-*`, `REF-*`) | beschreibend; kein eigener Implementierungsbeleg gefordert. Konsistenz wird über Dokumentenreview geprüft |
 
 ### RPC-LESE-003 – ID-Schema
 
@@ -241,7 +245,7 @@ Folgende Use Cases SOLLEN unterstützt werden:
 
 Folgende Vertrauensgrenzen MÜSSEN als solche dokumentiert und in Code/Konfiguration durchgesetzt werden:
 
-- **Client ↔ RPC-Server**: TLS 1.3 MUSS unterstützt werden; mTLS SOLLTE für produktive Umgebungen verpflichtend konfigurierbar sein.
+- **Client ↔ RPC-Server**: TLS 1.3 MUSS unterstützt werden; mTLS oder ein äquivalentes starkes Client-Authentisierungsverfahren MUSS konfigurierbar sein.
 - **RPC-Server ↔ PKCS#11-HSM / Netzwerk-HSM / Cloud-HSM**: PKCS#11-Modulpfad, Slot-/Token-Auswahl, PIN/Secrets, Vendor-Client-Konfiguration und Netzwerk-Time-outs MÜSSEN serverseitig kontrolliert werden.
 - **RPC-Server ↔ Cloud-KMS**: Cloud-Credentials, Provider-Region, Key-Ressourcen und IAM-/RBAC-Berechtigungen MÜSSEN serverseitig kontrolliert werden.
 - **Generator ↔ OASIS-Quellen**: Header- und Spec-Versionen MÜSSEN reproduzierbar gepinnt sein.
@@ -257,7 +261,7 @@ Der MVP MUSS aus OASIS-PKCS#11-Headern und einer Mapping-Datei eine Protobuf-IDL
 
 Kernumfang: `C_Initialize`, `C_Finalize`, `C_GetInfo`, `C_GetSlotList`, `C_GetSlotInfo`, `C_GetTokenInfo`, `C_GetMechanismList`, `C_GetMechanismInfo`, `C_OpenSession`, `C_CloseSession`, `C_Login`, `C_Logout`, `C_FindObjectsInit`, `C_FindObjects`, `C_FindObjectsFinal`, `C_GetAttributeValue`, `C_SignInit`, `C_Sign`, `C_GenerateRandom` (19 Funktionen).
 
-Akzeptanz: Golden-file-Test vergleicht die generierte IDL mit einem eingecheckten Referenzartefakt.
+Akzeptanz: Golden-File-Test vergleicht die generierte IDL mit einem eingecheckten Referenzartefakt.
 
 ### RPC-MVP-002 – Go-Referenzserver gegen SoftHSM
 
@@ -381,7 +385,7 @@ Slot- und Token-Funktionen MÜSSEN die relevanten PKCS#11-Felder vollständig ge
 
 #### RPC-FA-P11-003 – Returncode-Erhalt
 
-Jede fachliche Response MUSS ein `CK_RV`-Feld enthalten. Transportfehler DÜRFEN nur für RPC-/Netzwerk-/Authentisierungsfehler verwendet werden, nicht für normale PKCS#11-Fehler.
+Jede fachliche PKCS#11-Response MUSS ein `CK_RV`-Feld enthalten. Transportfehler DÜRFEN nur für RPC-/Netzwerk-/Authentisierungsfehler verwendet werden, nicht für normale PKCS#11-Fehler. Ein PKCS#11-Fehler wie `CKR_PIN_INCORRECT` oder `CKR_MECHANISM_INVALID` MUSS daher als fachliche Response mit entsprechendem `CK_RV` transportiert werden.
 
 #### RPC-FA-P11-004 – CK_ULONG-Normalisierung
 
@@ -515,9 +519,13 @@ Die Cloud-KMS-API-Familie MUSS außerhalb des MVP unter einem getrennten version
 
 Der RPC-Overhead für eine Single-Part-Signatur gegen lokales SoftHSM SOLLTE in der Referenzumgebung unter 5 ms p95 gegenüber direktem PKCS#11-Aufruf liegen.
 
+Akzeptanz: Ein Benchmark-Skript misst direkten PKCS#11-Aufruf und RPC-Aufruf im selben Lauf, dokumentiert Stichprobengröße, Warm-up, Hardware, Backend-Profil und p95-Differenz.
+
 #### RPC-NFA-PERF-002 – Parallelität
 
 Der Server MUSS parallele Sessions unterstützen. Der MVP SOLL mindestens 32 gleichzeitige Sessions gegen SoftHSM ohne Session-Leak verwalten.
+
+Akzeptanz: Ein Lasttest öffnet mindestens 32 parallele Sessions, führt pro Session eine einfache Operation aus und weist nach Testende geschlossene oder abgelaufene Sessions ohne Leaks nach.
 
 ### 8.2 Skalierbarkeit und Hochverfügbarkeit
 
@@ -537,7 +545,7 @@ Produktive Verbindungen MÜSSEN TLS 1.3 unterstützen und MÜSSEN unverschlüsse
 
 #### RPC-NFA-SEC-002 – Client-Authentisierung
 
-Der Server SOLLTE mTLS oder ein äquivalentes starkes Authentisierungsverfahren unterstützen.
+Der Server MUSS mindestens ein starkes Client-Authentisierungsverfahren unterstützen. mTLS SOLLTE als Standardverfahren für produktive Profile bereitstehen; äquivalente Verfahren MÜSSEN dokumentieren, wie Client-Identitäten authentisiert und auf serverseitige Principals abgebildet werden.
 
 #### RPC-NFA-SEC-003 – PIN-Handling
 
@@ -545,7 +553,7 @@ PINs und HSM-Credentials MÜSSEN aus externen Secret-Quellen geladen werden kön
 
 #### RPC-NFA-SEC-004 – Autorisierung
 
-Der Server SOLLTE Funktions-, Token- und Mechanism-Policies pro Client-Identität erzwingen können.
+Der Server MUSS Autorisierungsentscheidungen pro authentisiertem Client-Kontext unterstützen. Funktions-, Token- und Mechanism-Policies pro Client-Identität SOLLTEN konfigurierbar erzwingbar sein.
 
 #### RPC-NFA-SEC-005 – Supply Chain
 
@@ -677,6 +685,8 @@ Konfiguration MUSS über Dateien und Umgebungsvariablen möglich sein. Secrets D
 
 Die Abbildung MUSS sich auf eine konkret gepinnte Version der OASIS-PKCS#11-Spezifikation beziehen.
 
+Akzeptanz: Ein Quellenmanifest im Repository dokumentiert Spezifikationsversion, Bezugs-URL, Commit oder Release, Prüfsumme soweit verfügbar und Lizenzhinweis für die verwendeten Header und Spezifikationsauszüge.
+
 ### RPC-COMP-002 – Lizenz- und Quellennachweis
 
 Übernommene Header, generierte Artefakte und Spec-Auszüge MÜSSEN lizenzkonform dokumentiert werden.
@@ -793,11 +803,11 @@ PKCS#11 v2.40 ist kein MVP-Ziel; eine Unterstützung erfolgt – wenn überhaupt
 
 ### RPC-ACCEPT-001 – Funktionale Abnahme
 
-Ein automatisierter Test MUSS über RPC gegen SoftHSM Slots listen, eine Session öffnen, login durchführen, einen Key finden und eine Signatur erzeugen.
+Ein automatisierter Test MUSS über RPC gegen SoftHSM Slots listen, eine Session öffnen, Login durchführen, einen Key finden und eine Signatur erzeugen. Der Test MUSS erfolgreiche PKCS#11-Operationen mit `CKR_OK` prüfen.
 
 ### RPC-ACCEPT-002 – Generator-Abnahme
 
-Ein CI-Job MUSS IDL und Stubs aus gepinnten Quellen generieren und gegen Golden Files prüfen.
+Ein CI-Job MUSS IDL und Stubs aus gepinnten Quellen generieren und gegen Golden Files prüfen. Der Job MUSS fehlschlagen, wenn das Quellenmanifest, die Mapping-Datei oder ein generiertes Artefakt nicht zum eingecheckten Referenzstand passt.
 
 ### RPC-ACCEPT-003 – Sprach-Abnahme
 
@@ -805,7 +815,7 @@ Go-, Java-, Kotlin- und C#-Clients MÜSSEN mindestens einen Smoke-Test gegen den
 
 ### RPC-ACCEPT-004 – Security-Abnahme
 
-Ein Review MUSS bestätigen, dass PINs, private Schlüsselwerte und sensitive Attribute nicht geloggt, gemessen oder in Fehlerdetails ausgegeben werden.
+Ein Review MUSS bestätigen, dass PINs, private Schlüsselwerte und sensitive Attribute nicht geloggt, gemessen oder in Fehlerdetails ausgegeben werden. Zusätzlich MUSS mindestens ein automatisierter Negativtest repräsentative Logs, Metriken oder Fehlerdetails auf diese Geheimnisse prüfen.
 
 ### RPC-ACCEPT-005 – Betriebsabnahme
 
@@ -817,7 +827,7 @@ Für jedes als produktionsfähig deklarierte Netzwerk-HSM-Profil MUSS ein dokume
 
 ### RPC-ACCEPT-007 – Cloud-KMS-Profilabnahme
 
-Für jedes als produktionsfähig deklarierte Cloud-KMS-Profil MUSS ein dokumentierter Smoke-Test mindestens `ListKeys` oder `GetPublicKey` sowie eine nicht-destruktive Krypto-Operation gegen ein Test-/Sandbox-Key ausführen.
+Für jedes als produktionsfähig deklarierte Cloud-KMS-Profil MUSS ein dokumentierter Smoke-Test mindestens `ListKeys` oder `GetPublicKey` sowie eine nicht-destruktive Krypto-Operation gegen einen Test-/Sandbox-Key ausführen.
 
 ---
 
@@ -875,8 +885,8 @@ Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cl
 
 - OASIS PKCS#11 Specification v3.2 – https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/
 - OASIS PKCS#11 GitHub Repository – https://github.com/oasis-tcs/pkcs11
-- OASIS PKCS#11 Header – https://github.com/oasis-tcs/pkcs11/tree/master/working/headers
-- OASIS PKCS#11 Spec Markdown – https://github.com/oasis-tcs/pkcs11/tree/master/working/doc/spec
+- OASIS PKCS#11 Header (Upstream, im Quellenmanifest zu pinnen) – https://github.com/oasis-tcs/pkcs11/tree/master/working/headers
+- OASIS PKCS#11 Spec Markdown (Upstream, im Quellenmanifest zu pinnen) – https://github.com/oasis-tcs/pkcs11/tree/master/working/doc/spec
 - AWS KMS API Reference – https://docs.aws.amazon.com/kms/latest/APIReference/
 - Google Cloud KMS API Reference – https://cloud.google.com/kms/docs/reference/rest/
 - Azure Key Vault Keys REST API – https://learn.microsoft.com/en-us/rest/api/keyvault/keys/
@@ -887,5 +897,5 @@ Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cl
 
 - [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation (geplant)
 - [spec/architecture.md](architecture.md) – Architekturüberblick und Komponentensicht (geplant)
-- [docs/compatibility.md](../docs/compatibility.md) – Kompatibilitätsmatrix (geplant)
-- [docs/mapping.md](../docs/mapping.md) – Mapping-Regeln (geplant)
+- `docs/compatibility.md` – Kompatibilitätsmatrix (geplant)
+- `docs/mapping.md` – Mapping-Regeln (geplant)
