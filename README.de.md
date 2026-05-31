@@ -60,7 +60,8 @@ M1-Slice — getriggert in
 - **Transportneutraler Vertrag.** gRPC und TCP-RPC sind
   Transportprofile über derselben fachlichen Semantik. TLS/mTLS ist
   eine Laufzeitoption pro Profil, keine Voraussetzung für IDL-,
-  Mapping- oder Stub-Generierung
+  Mapping- oder Stub-Generierung. TCP-RPC nutzt Protobuf-Binary als
+  kanonischen Payload-Codec und kann optional MessagePack unterstützen
   ([`RPC-API-TRANSPORT-*`](spec/lastenheft.md)).
 - **Runtime-Source statt Black-Box-SDK.** Der Generator kann lesbaren
   Runtime-Quellcode ausgeben, optional auch in hexagonaler Adapter-
@@ -138,7 +139,7 @@ CI-Workflow; alle drei kommen mit M1.
 | Roadmap | `Entwurf` | [`docs/plan/planning/in-progress/roadmap.md`](docs/plan/planning/in-progress/roadmap.md) — M1 PKCS#11-MVP → M2 Netzwerk-HSM → M3 Cloud-HSM → M4 Cloud-KMS |
 | Build-/Container-Harness | `Open` | [`open/001-build-container-harness.md`](docs/plan/planning/open/001-build-container-harness.md) — Analyse der Schwesterprojekt-Pattern, drei Optionen, Aktivierungstrigger |
 | Generator + IDL | `Pending` | `RPC-FA-GEN-*`, `RPC-FA-IDL-*`; aktiviert mit M1 |
-| Transportprofile | `Pending` | `RPC-API-TRANSPORT-*`; gRPC und TCP-RPC mit optionalen Security-Modi `none`/`tls`/`mtls`/`external` |
+| Transportprofile | `Pending` | `RPC-API-TRANSPORT-*`; gRPC und TCP-RPC mit Protobuf-Binary plus optional MessagePack für TCP-RPC und optionalen Security-Modi `none`/`tls`/`mtls`/`external` |
 | Referenzserver (Go) | `Pending` | `RPC-MVP-002`, `RPC-TECH-003`; aktiviert mit M1 |
 | Sprach-Stubs + Runtime-Source (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-FA-GEN-007..009`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; aktiviert mit M1 |
 
@@ -163,8 +164,8 @@ Kapitel 4:
   ([`RPC-FA-GEN-007..009`](spec/lastenheft.md),
   [`RPC-ARCH-004`](spec/lastenheft.md))
 - gRPC- und TCP-RPC-Transportprofile mit expliziten
-  `security=none|tls|mtls|external`- und `identity.source`-
-  Profileinstellungen unterstützen
+  `tcp-rpc.codec=protobuf|messagepack`-, `security=none|tls|mtls|external`-
+  und `identity.source`-Profileinstellungen unterstützen
   ([`RPC-API-TRANSPORT-*`](spec/lastenheft.md))
 - PKCS#11-Returncodes (`CK_RV`) in jeder fachlichen Response erhalten
   ([`RPC-MVP-004`](spec/lastenheft.md))
@@ -185,8 +186,9 @@ Abnahme über `RPC-ACCEPT-001…005`.
   wendet eine handgepflegte Mapping-Datei an, emittiert kanonische
   Protobuf-IDL, Per-Sprach-Stubs und optionale Runtime-Source-
   Artefakte
-- Transportprofile für gRPC und framed TCP-RPC mit expliziten
-  Laufzeitschaltern für Transport-Security und Identitätsquelle
+- Transportprofile für gRPC und framed TCP-RPC mit Protobuf-Binary plus
+  optionalen MessagePack-Payloads und expliziten Laufzeitschaltern für
+  Transport-Security und Identitätsquelle
 - optionale hexagonale Runtime-Source mit Domain-Ports, Driving-
   Adaptern, Driven-Backend-Adaptern, Konfiguration, Observability und
   Audit-Integration

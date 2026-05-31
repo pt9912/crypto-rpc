@@ -574,21 +574,27 @@ Der RPC-Server MUSS mindestens zwei Transportprofile unterstützen: gRPC und TCP
 
 TCP-RPC MUSS als eigenständiges, längenbegrenztes und versioniertes Framing über TCP spezifiziert werden. Das Framing MUSS Request-ID, Method-Identifier, Payload-Länge, Protokollversion und Fehlerklasse transportieren können und MUSS maximale Frame- und Message-Größen erzwingen.
 
-### RPC-API-TRANSPORT-003 – Optionale TLS/mTLS-Terminierung
+### RPC-API-TRANSPORT-003 – TCP-RPC-Payload-Codecs
+
+TCP-RPC MUSS Protobuf-Binary als kanonischen Payload-Codec unterstützen. TCP-RPC KANN zusätzlich MessagePack als explizit auswählbaren Payload-Codec unterstützen. MessagePack MUSS aus derselben fachlichen IDL und demselben Mapping abgeleitet sein, MUSS Byte-Felder, `uint64`-Werte, Handles und Returncodes verlustfrei transportieren und DARF keine abweichende PKCS#11-Semantik einführen. YAML DARF NICHT als TCP-RPC-Payload-Codec verwendet werden.
+
+Die Codec-Auswahl MUSS explizit über Tool- oder Profilwerte erfolgen, z. B. `tcp-rpc.codec=protobuf` oder `tcp-rpc.codec=messagepack`. Auto-Detection oder stiller Fallback zwischen Codecs ist ausgeschlossen.
+
+### RPC-API-TRANSPORT-004 – Optionale TLS/mTLS-Terminierung
 
 IDL, Mapping, Client-Stubs und Server-Stubs MÜSSEN unabhängig von TLS/mTLS generierbar sein. TLS 1.3 und mTLS KÖNNEN für gRPC und TCP-RPC als Laufzeitoption aktiviert werden. Wenn TLS/mTLS aktiviert ist, MUSS der Server die geprüfte Client-Identität transportneutral in einen internen Principal abbilden, damit Autorisierung, Session-Besitz und Audit nicht vom konkreten Transportprofil abhängen.
 
-### RPC-API-TRANSPORT-004 – Tool- und Profilschalter
+### RPC-API-TRANSPORT-005 – Tool- und Profilschalter
 
-Generator- und Server-Tools MÜSSEN Transportprofile und Transport-Security über explizite Schalter oder Profilwerte auswählbar machen. Mindestens erforderlich sind Transportauswahl (`grpc`, `tcp-rpc`) und Security-Modus (`none`, `tls`, `mtls`, `external`). Eine Änderung des Security-Modus DARF die generierte fachliche Protobuf-IDL, Mapping-Auswertung, Client-Stubs oder Server-Stubs nicht verändern; sie DARF nur Konfiguration, Bootstrap-Code, Beispiele oder Runbooks beeinflussen.
+Generator- und Server-Tools MÜSSEN Transportprofile, TCP-RPC-Payload-Codec und Transport-Security über explizite Schalter oder Profilwerte auswählbar machen. Mindestens erforderlich sind Transportauswahl (`grpc`, `tcp-rpc`), TCP-RPC-Codec (`protobuf`, optional `messagepack`) und Security-Modus (`none`, `tls`, `mtls`, `external`). Eine Änderung von Security-Modus oder Codec DARF die generierte fachliche Protobuf-IDL oder Mapping-Auswertung nicht verändern; sie DARF nur Stub-/Runtime-Code, Konfiguration, Bootstrap-Code, Beispiele oder Runbooks beeinflussen.
 
-### RPC-API-TRANSPORT-005 – Identitätsquelle und External-Termination
+### RPC-API-TRANSPORT-006 – Identitätsquelle und External-Termination
 
 Wenn ein Profil Client-Identitäten verwendet, MUSS die Identitätsquelle explizit konfiguriert werden; Auto-Detection ist ausgeschlossen. Zulässige initiale Werte sind `mtls-subject`, `header` und `none`.
 
 Für `security=mtls` MUSS `identity.source=mtls-subject` oder eine dokumentierte äquivalente Zertifikatsableitung verwendet werden. Für `security=external`, etwa bei L7-Service-Mesh- oder Reverse-Proxy-Terminierung, MUSS `identity.source=header` eine nicht leere Peer-Allowlist besitzen, bevor Header-Werte als Client-Identität akzeptiert werden. Ohne Peer-Allowlist MUSS der Serverstart fehlschlagen.
 
-### RPC-API-TRANSPORT-006 – Betriebsmodi für Terminierung
+### RPC-API-TRANSPORT-007 – Betriebsmodi für Terminierung
 
 Das Projekt MUSS mindestens folgende Transport-Security-Betriebsmodi dokumentieren:
 
