@@ -135,9 +135,9 @@ Ein Backend-Profil oder Adapter DARF nur als produktionsfähig deklariert werden
 
 `crypto-rpc` MUSS ein Monorepo für vier gleichrangige Kryptografie-RPC-Domänen bereitstellen: PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM.
 
-Der MVP MUSS zunächst die PKCS#11-API semantisch 1:1 abbilden und aus offiziellen OASIS-PKCS#11-Quellen reproduzierbar generierbare IDL-, Client-Stub-, Server-Stub- und Runtime-Source-Artefakte für Go, Java, Kotlin und C# erzeugen können. Cloud-KMS, Netzwerk-HSM und Cloud-HSM sind gleichrangige Ziel-Domänen, blockieren den MVP aber nicht.
+Der MVP MUSS zunächst die PKCS#11-API semantisch 1:1 abbilden und aus offiziellen OASIS-PKCS#11-Quellen reproduzierbar generierbare IDL-, Client-Stub-, Server-Stub- und Runtime-Source-Artefakte für Go, Java, C# und den Kotlin-Zielpfad erzeugen können. Der Kotlin-Zielpfad MUSS entweder native Kotlin-Artefakte oder explizit deklarierte Kotlin-kompatible Java-Artefakte gemäß `RPC-API-KOTLIN-001` bereitstellen. Cloud-KMS, Netzwerk-HSM und Cloud-HSM sind gleichrangige Ziel-Domänen, blockieren den MVP aber nicht.
 
-Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go/Java/Kotlin/C# und führt die funktionale MVP-Abnahme gemäß `RPC-ACCEPT-001` über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
+Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go/Java/Kotlin-Zielpfad/C# und führt die funktionale MVP-Abnahme gemäß `RPC-ACCEPT-001` über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
 
 ### RPC-ZB-002 – Produktvision
 
@@ -154,10 +154,10 @@ Für PKCS#11 SOLLEN Anwendungen dieselben Operationen, Returncodes, Sessions, Ha
 | MUSS   | MVP: Generator aus OASIS-Headern plus gepflegter Mapping-Datei für PKCS#11-RPC-Semantik.                  |
 | MUSS   | MVP: Protobuf-IDL als kanonische RPC-Schnittstelle für PKCS#11.                                           |
 | MUSS   | MVP: Go-Referenzserver mit internem PKCS#11-Backend über `miekg/pkcs11` oder äquivalentes Binding.        |
-| MUSS   | MVP: generierte Go-, Java-, Kotlin- und C#-Client- und Server-Stubs sowie Runtime-Source-Artefakte für PKCS#11. |
+| MUSS   | MVP: generierte Go-, Java-, C#- und Kotlin-Zielpfad-Client- und Server-Stubs sowie Runtime-Source-Artefakte für PKCS#11. |
 | MUSS   | MVP: numerische PKCS#11-Returncodes (`CK_RV`) in jeder fachlichen Response erhalten.                      |
 | SOLLTE | Mapping für Mechanism- und Attribute-Parameter typsicher modellieren, soweit die Spezifikation dies zulässt. |
-| SOLLTE | Mehrere PKCS#11-Versionen über versionierte Mapping-Profile unterstützen.                                 |
+| SOLLTE | Mehrere PKCS#11-Versionen über versionierte RPC Surface Profiles gemäß `RPC-FA-IDL-007` unterstützen.     |
 | SOLLTE | Netzwerk-HSM- und Cloud-HSM-Profile als gleichrangige Domänen dokumentieren und testen.                   |
 | SOLLTE | Eine getrennte Cloud-KMS-RPC-API mit AWS-/GCP-/Azure-kompatiblen Operationen bereitstellen.               |
 | KANN   | Einen optionalen C-kompatiblen PKCS#11-Proxy (`libpkcs11.so`) bereitstellen.                              |
@@ -202,14 +202,14 @@ Sekundäre Umgebungen, die im CI mitgeführt werden SOLLEN:
 - dokumentierte Beispielprofile für Netzwerk-HSM und Cloud-HSM,
 - Mock- oder Sandbox-Backends für Cloud-KMS-Profile,
 - Linux ARM64 als Best-Effort,
-- generierte Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go, Java, Kotlin und C# ohne laufendes HSM.
+- generierte Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go, Java, C# und den Kotlin-Zielpfad ohne laufendes HSM.
 
 ### RPC-PE-004 – Anwendungsfälle
 
 Folgende Use Cases MÜSSEN unterstützt werden:
 
 - **UC-1 PKCS#11 Generate-IDL (MVP)**: Generator erzeugt eine versionierte Protobuf-IDL aus OASIS-Headern und Mapping-Datei.
-- **UC-2 PKCS#11 Generate-Stubs/Runtime (MVP)**: Generator-Workflow erzeugt Go-, Java-, Kotlin- und C#-Client- und Server-Stubs sowie Runtime-Source-Artefakte.
+- **UC-2 PKCS#11 Generate-Stubs/Runtime (MVP)**: Generator-Workflow erzeugt Go-, Java-, C#- und Kotlin-Zielpfad-Client- und Server-Stubs sowie Runtime-Source-Artefakte.
 - **UC-3 PKCS#11 List-Slots (MVP)**: Client ruft `C_GetSlotList` und `C_GetTokenInfo` über RPC auf.
 - **UC-4 PKCS#11 Open-Session/Login (MVP)**: Client eröffnet eine Session und meldet sich gemäß konfiguriertem Credential-Modell mit `C_Login` an.
 - **UC-5 PKCS#11 Find-Object (MVP)**: Client führt `C_FindObjectsInit`/`C_FindObjects`/`C_FindObjectsFinal` aus.
@@ -265,8 +265,8 @@ Folgende Use Cases SOLLEN unterstützt werden:
 | `server/kms-go`       | Go               | KMS-Server/Adapter für Cloud-KMS-Profile (post-MVP)                            |
 | `runtime/go`          | Go               | generierte Go-Client- und Go-Server-Stubs sowie als Source ausgebbare Client-/Server-Hilfen |
 | `runtime/java`        | Java             | generierte Java-Client- und Java-Server-Stubs sowie als Source ausgebbare ergonomische Wrapper |
-| `runtime/kotlin`      | Kotlin           | generierte oder Kotlin-kompatible Client-/Server-Stubs und als Source ausgebbare Coroutine-fähige Wrapper |
 | `runtime/csharp`      | C#               | generierte .NET-Client- und .NET-Server-Stubs sowie als Source ausgebbare Wrapper |
+| `runtime/kotlin`      | Kotlin-Zielpfad  | native Kotlin-Artefakte oder Kotlin-kompatible Nutzung der Java-Artefakte gemäß `RPC-API-KOTLIN-001`; ein eigenes Modul ist nur für native Kotlin-Artefakte Pflicht |
 | `mappings/`           | YAML             | manuelle Semantik-Ergänzungen für Pointer, Buffer, Structs und Sonderfälle (YAML ist kanonisch) |
 | `profiles/`           | YAML             | Betriebsprofile für SoftHSM, Netzwerk-HSMs, Cloud-HSMs und Cloud-KMS-Provider (YAML ist kanonisch) |
 | `third_party/oasis/`  | Header/Markdown  | gepinnte OASIS-PKCS#11-Quellen oder Reproduktionshinweise                      |
@@ -302,7 +302,29 @@ Eine gemeinsame Infrastruktur für Transport, Authentisierung, Observability ode
 
 Der MVP MUSS aus OASIS-PKCS#11-Headern, einer Mapping-Datei und einem maschinenlesbaren RPC Surface Profile eine Protobuf-IDL für einen Kernumfang erzeugen.
 
-Kernumfang: `C_Initialize`, `C_Finalize`, `C_GetInfo`, `C_GetSlotList`, `C_GetSlotInfo`, `C_GetTokenInfo`, `C_GetMechanismList`, `C_GetMechanismInfo`, `C_OpenSession`, `C_CloseSession`, `C_Login`, `C_Logout`, `C_FindObjectsInit`, `C_FindObjects`, `C_FindObjectsFinal`, `C_GetAttributeValue`, `C_SignInit`, `C_Sign`, `C_GenerateRandom` (19 Funktionen).
+Kernumfang (19 Funktionen):
+
+| Nr. | Funktion |
+| --- | -------- |
+| 1 | `C_Initialize` |
+| 2 | `C_Finalize` |
+| 3 | `C_GetInfo` |
+| 4 | `C_GetSlotList` |
+| 5 | `C_GetSlotInfo` |
+| 6 | `C_GetTokenInfo` |
+| 7 | `C_GetMechanismList` |
+| 8 | `C_GetMechanismInfo` |
+| 9 | `C_OpenSession` |
+| 10 | `C_CloseSession` |
+| 11 | `C_Login` |
+| 12 | `C_Logout` |
+| 13 | `C_FindObjectsInit` |
+| 14 | `C_FindObjects` |
+| 15 | `C_FindObjectsFinal` |
+| 16 | `C_GetAttributeValue` |
+| 17 | `C_SignInit` |
+| 18 | `C_Sign` |
+| 19 | `C_GenerateRandom` |
 
 Akzeptanz: Golden-File-Test vergleicht die aus dem MVP Surface Profile generierte IDL mit einem eingecheckten Referenzartefakt.
 
@@ -314,9 +336,9 @@ Akzeptanz: Ein Integrationstest gemäß `RPC-ACCEPT-001` initialisiert einen Sof
 
 ### RPC-MVP-003 – Client-, Server-Stubs und Runtime-Source
 
-Der MVP MUSS Go-, Java-, Kotlin- und C#-Client- und Server-Stubs aus der Protobuf-IDL sowie Runtime-Source-Artefakte für die Nutzung dieser Stubs erzeugen. Server-Stubs umfassen mindestens die sprachtypischen Service-Interfaces, abstrakten Basisklassen oder Registrierungsartefakte, auf deren Basis eine Serverimplementierung die generierten RPC-Methoden implementieren kann. Runtime-Source-Artefakte umfassen mindestens sprachspezifische Hilfen für Client- und Servernutzung, Returncode-Behandlung, Transportauswahl und Test-Harnesses gemäß `RPC-FA-GEN-008`.
+Der MVP MUSS Go-, Java-, C#- und Kotlin-Zielpfad-Client- und Server-Stubs aus der Protobuf-IDL sowie Runtime-Source-Artefakte für die Nutzung dieser Stubs erzeugen. Der Kotlin-Zielpfad MUSS entweder native Kotlin-Artefakte oder explizit deklarierte Kotlin-kompatible Java-Artefakte gemäß `RPC-API-KOTLIN-001` umfassen. Server-Stubs umfassen mindestens die sprachtypischen Service-Interfaces, abstrakten Basisklassen oder Registrierungsartefakte, auf deren Basis eine Serverimplementierung die generierten RPC-Methoden implementieren kann. Runtime-Source-Artefakte umfassen mindestens sprachspezifische Hilfen für Client- und Servernutzung, Returncode-Behandlung, Transportauswahl und Test-Harnesses gemäß `RPC-FA-GEN-008`.
 
-Akzeptanz: CI-Build weist nach, dass alle generierten Client- und Server-Stubs sowie Runtime-Source-Artefakte ohne manuelle Nachbearbeitung kompilieren. Für Go MUSS der CI-Build nachweisen, dass der Referenzserver gegen die generierten Go-Server-Stubs und Go-Runtime-Source baut. Für Java, Kotlin und C# MUSS mindestens ein Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server- und Runtime-Artefakte nachgewiesen werden; ein vollständiges PKCS#11-Backend ist dafür nicht erforderlich.
+Akzeptanz: CI-Build weist nach, dass alle generierten Client- und Server-Stubs sowie Runtime-Source-Artefakte ohne manuelle Nachbearbeitung kompilieren. Für Go MUSS der CI-Build nachweisen, dass der Referenzserver gegen die generierten Go-Server-Stubs und Go-Runtime-Source baut. Für Java, C# und den Kotlin-Zielpfad MUSS mindestens ein Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server- und Runtime-Artefakte nachgewiesen werden; ein vollständiges PKCS#11-Backend ist dafür nicht erforderlich.
 
 ### RPC-MVP-004 – Returncode-Treue
 
@@ -378,7 +400,7 @@ Eine Cloud-KMS-API-Familie DARF NICHT als PKCS#11-kompatible Schnittstelle ausge
 
 ### RPC-NONGOAL-007 – Keine vollständigen Referenzserver pro Sprache im MVP
 
-Der MVP verlangt Client- und Server-Stubs für Go, Java, Kotlin und C#, aber keine vollständige PKCS#11-Referenzserver-Implementierung in jeder dieser Sprachen. Für Nicht-Go-Sprachen reicht im MVP ein kompilierbarer Stub-Harness oder Mock-Server-Kontrakttest, der die generierten Server-Artefakte verwendet und deren Integrationsfähigkeit nachweist; der Client-Smoke-Test gegen den Go-Referenzserver aus `RPC-ACCEPT-003` bleibt davon unberührt.
+Der MVP verlangt Client- und Server-Stubs für Go, Java, C# und den Kotlin-Zielpfad, aber keine vollständige PKCS#11-Referenzserver-Implementierung in jeder dieser Sprachen. Für Nicht-Go-Sprachen reicht im MVP ein kompilierbarer Stub-Harness oder Mock-Server-Kontrakttest, der die generierten Server-Artefakte verwendet und deren Integrationsfähigkeit nachweist; der Client-Smoke-Test gegen den Go-Referenzserver aus `RPC-ACCEPT-003` bleibt davon unberührt.
 
 ---
 
@@ -412,7 +434,7 @@ PKCS#11-Handles (`CK_SESSION_HANDLE`, `CK_OBJECT_HANDLE`) MÜSSEN im RPC als opa
 
 #### RPC-FA-IDL-006 – Größen- und Streaming-Grenzen
 
-Die IDL MUSS für Byte-Felder und wiederholte Felder Größenlimits explizit ausweisen. Zulässige Mechanismen sind dokumentierte IDL-Optionen, normative Kommentar-Annotationen direkt am Feld oder ein Verweis auf eine zentrale Limit-Tabelle gemäß `RPC-MENGE-005`. Wenn Kommentar-Annotationen verwendet werden, MUSS deren Format dokumentiert und durch Generator oder CI validiert werden. Der gewählte Mechanismus MUSS für ein RPC Surface Profile einheitlich sein und im aktiven RPC Surface Profile oder in der Technischen Spezifikation festgelegt werden; für das MVP Surface Profile MUSS `RPC-ACCEPT-002` diese Festlegung über Golden Files oder einen Generator-Validierungstest prüfen. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
+Die IDL MUSS für Byte-Felder und wiederholte Felder Größenlimits explizit ausweisen. Zulässige Mechanismen sind dokumentierte IDL-Optionen, normative Kommentar-Annotationen direkt am Feld oder ein Verweis auf eine zentrale Limit-Tabelle gemäß `RPC-MENGE-005`. Wenn Kommentar-Annotationen verwendet werden, MUSS deren Format dokumentiert und durch Generator oder CI validiert werden. Der gewählte Mechanismus MUSS für ein RPC Surface Profile einheitlich sein und im aktiven RPC Surface Profile oder in der Technischen Spezifikation, Kapitel "Größen- und Streaming-Grenzen", festgelegt werden; für das MVP Surface Profile MUSS `RPC-ACCEPT-002` diese Festlegung über Golden Files oder einen Generator-Validierungstest prüfen. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
 
 #### RPC-FA-IDL-007 – Einschränkbarer PKCS#11-RPC-Surface
 
@@ -554,7 +576,7 @@ Das Projekt MUSS zwischen Transportfehlern, Authentisierungs-/Autorisierungsfehl
 
 #### RPC-FA-AUDIT-001 – Audit-Pflichtfelder
 
-Der Server SOLL jede kryptografische Operation mit Zeitstempel, Client-Identität, Funktion, Slot/Token, Session-ID, Mechanism, Key-Identifier soweit verfügbar, `CK_RV` und Latenz auditieren. Welche Felder pro Profil Pflichtfelder, optionale Felder oder nicht verfügbar sind, MUSS gemäß `RPC-FA-AUDIT-003` im Profil festgelegt werden; insbesondere MUSS begründet sein, wann ein Key-Identifier als nicht verfügbar gilt.
+Der Server SOLL jede kryptografische Operation mit Zeitstempel, Client-Identität, Funktion, Slot/Token, Session-ID, Mechanism, Key-Identifier soweit verfügbar, `CK_RV` und Latenz auditieren. Welche Felder pro Profil Pflichtfelder, optionale Felder oder nicht verfügbar sind, MUSS gemäß `RPC-FA-AUDIT-003` im Profil festgelegt werden; insbesondere MUSS begründet sein, wann ein Key-Identifier als nicht verfügbar gilt. Audit-Datensätze unterliegen nicht der Pseudonymisierungspflicht aus `RPC-NFA-OBS-003`, MÜSSEN aber das Geheimnisverbot aus `RPC-FA-AUDIT-002` einhalten.
 
 #### RPC-FA-AUDIT-002 – Geheimnisverbot
 
@@ -581,6 +603,8 @@ Cloud-KMS-Dienste ohne PKCS#11-Semantik MÜSSEN außerhalb des MVP über eine ge
 #### RPC-FA-BACKEND-004 – Keine implizite Semantikübersetzung
 
 Der Server DARF Cloud-KMS-Operationen nicht stillschweigend als PKCS#11-Operationen tarnen. Jede Brücke zwischen PKCS#11 und Cloud-KMS MUSS explizit als Adapter oder Kompatibilitätsmodus dokumentiert werden.
+
+Zulässig sind ausdrücklich getrennte Adapter, die eine Anwendung von der PKCS#11-API-Familie auf die `cryptorpc.kms.v1`-API-Familie umstellen, sowie dokumentierte Kompatibilitätsmodi, die keine PKCS#11-Kompatibilität behaupten und die verlorene Semantik, z. B. fehlende Slots, Sessions, Handles, `CK_ATTRIBUTE` oder `CK_RV`, benennen. Unzulässig ist insbesondere, Cloud-KMS-Operationen wie `Encrypt`, `Decrypt`, `Sign`, `Verify`, `GetPublicKey` oder `GenerateDataKey` als `C_Encrypt`, `C_Decrypt`, `C_Sign`, `C_Verify`, `C_GetAttributeValue` oder `C_GenerateKey` im `pkcs11/v1`-Paket auszugeben, wenn keine vollständige PKCS#11-Semantik einschließlich Returncodes, Objektmodell und Session-/Handle-Regeln bereitgestellt wird.
 
 #### RPC-FA-BACKEND-005 – Supportstatus pro Backend-Profil
 
@@ -788,6 +812,10 @@ crypto-rpc/
   mappings/
   profiles/
   runtime/
+    go/
+    java/
+    csharp/
+    kotlin/
   server/
     pkcs11-go/
     kms-go/
@@ -796,7 +824,7 @@ crypto-rpc/
   spec/
 ```
 
-`cmd/crypto-rpc-gen/` ist der vorgesehene CLI-Einstieg für die Komponente `crypto-rpc-gen` aus `RPC-PUE-002`; Generator-Interna bleiben unter `internal/` oder einem dokumentierten Generatorpaket. `proto/kms/` und `server/kms-go/` sind Zielstruktur für die post-MVP Cloud-KMS-Domäne. Sie müssen im MVP nicht vorhanden sein, solange Cloud-KMS nicht in den Release-Scope aufgenommen ist.
+`cmd/crypto-rpc-gen/` ist der vorgesehene CLI-Einstieg für die Komponente `crypto-rpc-gen` aus `RPC-PUE-002`; Generator-Interna bleiben unter `internal/` oder einem dokumentierten Generatorpaket. Sprachspezifische Runtime-Untermodule liegen unter `runtime/<ziel>/` gemäß `RPC-PUE-002`; `runtime/kotlin/` ist nur dann als eigenes Modul erforderlich, wenn der native Kotlin-Pfad gewählt wird. `proto/kms/` und `server/kms-go/` sind Zielstruktur für die post-MVP Cloud-KMS-Domäne. Sie müssen im MVP nicht vorhanden sein, solange Cloud-KMS nicht in den Release-Scope aufgenommen ist.
 
 Netzwerk-HSM- und Cloud-HSM-Backends werden nicht als eigene Serverpakete geführt, sondern über Profile in `profiles/` an `server/pkcs11-go/` angeschlossen, solange sie über eine PKCS#11-Client-Library zugänglich sind (`RPC-PUE-004`, `RPC-FA-BACKEND-001`, `RPC-FA-BACKEND-002`). Eine eigene Serverkomponente außerhalb von `server/pkcs11-go/` MUSS erst entstehen, wenn ein Backend nachweislich keine PKCS#11-Semantik mehr trägt; eine solche Änderung MUSS über einen Architekturentscheid begründet werden.
 
@@ -826,7 +854,7 @@ Der RPC-Server DARF keine kryptografische Operation durch Host-Software ersetzen
 
 ### RPC-TECH-001 – Go
 
-Der MVP-Generator und der MVP-Referenzserver MÜSSEN in Go implementiert werden. Diese Vorgabe beschränkt nicht die Generierung von Server-Stubs für Java, Kotlin und C#.
+Der MVP-Generator und der MVP-Referenzserver MÜSSEN in Go implementiert werden. Diese Vorgabe beschränkt nicht die Generierung von Server-Stubs für Java, C# und den Kotlin-Zielpfad.
 
 ### RPC-TECH-002 – Protobuf, gRPC und TCP-RPC
 
@@ -1034,7 +1062,7 @@ Ein CI-Job MUSS IDL, Client-Stubs, Server-Stubs und Runtime-Source-Artefakte aus
 
 ### RPC-ACCEPT-003 – Sprach-Abnahme
 
-Go-, Java-, Kotlin- und C#-Artefakte MÜSSEN mindestens einen Client-Smoke-Test gegen den Go-Referenzserver nachweisen. Zusätzlich MUSS Go nachweisen, dass der Referenzserver gegen die generierten Server-Stubs und Runtime-Source-Artefakte baut; Java, Kotlin und C# MÜSSEN einen kompilierbaren Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Stubs und Runtime-Source-Artefakte nachweisen.
+Go-, Java-, C#- und Kotlin-Zielpfad-Artefakte MÜSSEN mindestens einen Client-Smoke-Test gegen den Go-Referenzserver nachweisen. Zusätzlich MUSS Go nachweisen, dass der Referenzserver gegen die generierten Server-Stubs und Runtime-Source-Artefakte baut; Java, C# und der Kotlin-Zielpfad MÜSSEN einen kompilierbaren Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Stubs und Runtime-Source-Artefakte nachweisen.
 
 ### RPC-ACCEPT-004 – Security-Abnahme
 
@@ -1054,7 +1082,7 @@ Für jedes als produktionsfähig deklarierte Cloud-KMS-Profil MUSS ein dokumenti
 
 ### RPC-ACCEPT-008 – Traceability-Abnahme
 
-Ein Abnahme-Artefakt MUSS alle MVP-blockierenden Anforderungen auf mindestens einen Test, ein Skript, ein Runbook oder einen dokumentierten Review-Beleg abbilden. Zusätzlich MUSS ein Trace-Inventar alle `MUSS`-Anforderungen des Lastenhefts aufführen und pro ID mindestens Status, Release-Scope, erwarteten Belegtyp gemäß `RPC-LESE-002` und vorhandenen oder geplanten Beleg nennen. Nicht im aktuellen Release-Scope liegende `MUSS`-Anforderungen MÜSSEN als `nicht im Scope` gekennzeichnet werden, statt als erfüllt zu gelten. Anforderungen ohne vorhandenen Beleg DÜRFEN nicht als erfüllt markiert werden.
+Ein Abnahme-Artefakt MUSS alle MVP-blockierenden Anforderungen auf mindestens einen Test, ein Skript, ein Runbook oder einen dokumentierten Review-Beleg abbilden. Zusätzlich MUSS ein Trace-Inventar alle `MUSS`-Anforderungen des Lastenhefts aufführen und pro ID mindestens Status, Release-Scope, erwarteten Belegtyp gemäß `RPC-LESE-002` und vorhandenen oder geplanten Beleg nennen. Nicht im aktuellen Release-Scope liegende `MUSS`-Anforderungen MÜSSEN als `nicht im Scope` gekennzeichnet werden, statt als erfüllt zu gelten. Referenzierte Belege wie `docs/compatibility.md` oder `docs/mapping.md` gelten nur als vorhanden, wenn sie im Repository existieren und die jeweilige Anforderung adressieren. Anforderungen ohne vorhandenen Beleg DÜRFEN nicht als erfüllt markiert werden.
 
 ### RPC-ACCEPT-009 – Secure-Defaults-Abnahme
 
@@ -1074,7 +1102,7 @@ Die Mengenschwelle für parallele MVP-Sessions wird ausschließlich in `RPC-NFA-
 
 ### RPC-MENGE-003 – Stub-Sprachen
 
-Der MVP MUSS vier Zielsprachen abdecken: Go, Java, Kotlin und C#.
+Der MVP MUSS Go, Java, C# und den Kotlin-Zielpfad gemäß `RPC-API-KOTLIN-001` abdecken.
 
 ### RPC-MENGE-004 – Backend-Profile
 
@@ -1106,6 +1134,7 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | IAM/RBAC | Identity & Access Management bzw. Role-Based Access Control; Berechtigungsmodelle in Cloud- und Plattformsystemen. |
 | IDL | Interface Definition Language, hier Protobuf. |
 | Identitätsquelle | Konfigurierter Ursprung der Client-Identität, z. B. mTLS-Zertifikat, Proxy-Header oder keine transportseitige Identität. |
+| Kotlin-Zielpfad | Der für Kotlin deklarierte Artefaktpfad: entweder native Kotlin-Client-/Server-Stubs und Runtime-Source oder explizit deklarierte Kotlin-kompatible Java-Artefakte mit Kotlin-Build- und Harness-Nachweis gemäß `RPC-API-KOTLIN-001`. |
 | Lease | Zeitlich begrenzte serverseitige Reservierung einer Ressource (z. B. einer Session) mit Idle-Timeout. |
 | Mapping-Datei | Manuell gepflegte Semantik-Ergänzung zu den OASIS-Headern. |
 | mTLS | Mutual TLS – beidseitige Authentisierung über X.509-Zertifikate. |
@@ -1145,5 +1174,5 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 
 - [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation
 - [spec/architecture.md](architecture.md) – Architekturüberblick und Komponentensicht
-- `docs/compatibility.md` – Kompatibilitätsmatrix (geplant)
-- `docs/mapping.md` – Mapping-Regeln (geplant)
+- `docs/compatibility.md` – Kompatibilitätsmatrix und MVP-Abnahmebeleg für `RPC-MVP-006`; muss vor MVP-Abnahme im Repository vorhanden sein
+- `docs/mapping.md` – dokumentierte Mapping-Regeln; alternativ oder ergänzend maschinenlesbare Mapping-Dateien unter `mappings/`; fehlende Belege sind im Trace-Inventar aus `RPC-ACCEPT-008` als nicht erfüllt zu führen
