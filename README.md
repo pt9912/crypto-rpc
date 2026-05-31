@@ -57,10 +57,11 @@ first M1 slice — tracked as
   headers; identical inputs produce byte-identical artefacts
   ([`RPC-FA-GEN-003`](spec/lastenheft.md)); golden-file tests guard
   against drift.
-- **Profile-limited PKCS#11 surface.** The active API profile decides
-  which PKCS#11 functions enter the IDL and stubs. The MVP profile
-  includes only the 19 core functions from `RPC-MVP-001`
-  ([`RPC-FA-IDL-007`](spec/lastenheft.md)).
+- **Profile-limited PKCS#11 surface.** The active RPC Surface Profile
+  decides which PKCS#11 functions enter the IDL and stubs. Each
+  generated surface is bound to exactly one PKCS#11 baseline version;
+  the MVP profile uses v3.2 and includes only the 19 core functions
+  from `RPC-MVP-001` ([`RPC-FA-IDL-007`](spec/lastenheft.md)).
 - **Transport-neutral contract.** gRPC and TCP-RPC are transport
   profiles over the same business semantics. TLS/mTLS is a runtime
   profile option, not a prerequisite for IDL, mapping, or stub
@@ -154,8 +155,8 @@ chapter 4:
 - generate a Protobuf IDL `cryptorpc.pkcs11.v1` from pinned OASIS
   PKCS#11 v3.2 headers covering 19 core functions
   ([`RPC-MVP-001`](spec/lastenheft.md))
-- restrict the generated PKCS#11 surface through the active MVP API
-  profile; functions outside the profile do not enter the MVP IDL
+- restrict the generated PKCS#11 surface through the active MVP RPC
+  Surface Profile; functions outside the profile do not enter the MVP IDL
   ([`RPC-FA-IDL-007`](spec/lastenheft.md))
 - ship a Go reference server running the core API against SoftHSM v2
   ([`RPC-MVP-002`](spec/lastenheft.md))
@@ -188,8 +189,8 @@ Acceptance covered by `RPC-ACCEPT-001…005`.
 ## Planned Functional Areas
 
 - generator pipeline `crypto-rpc-gen` (Go) — parses OASIS headers,
-  applies a hand-curated mapping file and active API profile, emits
-  canonical Protobuf IDL, per-language stubs, and optional
+  applies a hand-curated mapping file and active RPC Surface Profile,
+  emits canonical Protobuf IDL, per-language stubs, and optional
   runtime-source artefacts
 - transport profiles for gRPC and framed TCP-RPC with Protobuf-Binary
   plus optional MessagePack payloads and explicit runtime switches for

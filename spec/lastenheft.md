@@ -290,11 +290,11 @@ Eine gemeinsame Infrastruktur für Transport, Authentisierung, Observability ode
 
 ### RPC-MVP-001 – Generator für Kern-API
 
-Der MVP MUSS aus OASIS-PKCS#11-Headern, einer Mapping-Datei und einem maschinenlesbaren PKCS#11-API-Profil eine Protobuf-IDL für einen Kernumfang erzeugen.
+Der MVP MUSS aus OASIS-PKCS#11-Headern, einer Mapping-Datei und einem maschinenlesbaren RPC Surface Profile eine Protobuf-IDL für einen Kernumfang erzeugen.
 
 Kernumfang: `C_Initialize`, `C_Finalize`, `C_GetInfo`, `C_GetSlotList`, `C_GetSlotInfo`, `C_GetTokenInfo`, `C_GetMechanismList`, `C_GetMechanismInfo`, `C_OpenSession`, `C_CloseSession`, `C_Login`, `C_Logout`, `C_FindObjectsInit`, `C_FindObjects`, `C_FindObjectsFinal`, `C_GetAttributeValue`, `C_SignInit`, `C_Sign`, `C_GenerateRandom` (19 Funktionen).
 
-Akzeptanz: Golden-File-Test vergleicht die aus dem MVP-API-Profil generierte IDL mit einem eingecheckten Referenzartefakt.
+Akzeptanz: Golden-File-Test vergleicht die aus dem MVP Surface Profile generierte IDL mit einem eingecheckten Referenzartefakt.
 
 ### RPC-MVP-002 – Go-Referenzserver gegen SoftHSM
 
@@ -398,13 +398,13 @@ PKCS#11-Handles (`CK_SESSION_HANDLE`, `CK_OBJECT_HANDLE`) MÜSSEN im RPC als opa
 
 Die IDL MUSS für Byte-Felder und wiederholte Felder dokumentierte Größenlimits abbilden oder referenzieren können. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
 
-#### RPC-FA-IDL-007 – Einschränkbarer PKCS#11-API-Umfang
+#### RPC-FA-IDL-007 – Einschränkbarer PKCS#11-RPC-Surface
 
-Der PKCS#11-RPC-Umfang MUSS über ein maschinenlesbares API-Profil einschränkbar sein. Das API-Profil MUSS mindestens Funktionen als `include`, `exclude`, `generated-but-unsupported` oder `extension` klassifizieren können.
+Der PKCS#11-RPC-Umfang MUSS über ein maschinenlesbares RPC Surface Profile einschränkbar sein. Ein RPC Surface Profile MUSS genau eine PKCS#11-Basisversion referenzieren, z. B. `3.2`, und DARF Funktionen, Typen, Mechanisms oder Attribute aus unterschiedlichen OASIS-PKCS#11-Versionen nicht in einem generierten Surface vermischen.
 
-Der Generator MUSS für ein aktives API-Profil nur die als `include` oder explizit als `extension` aktivierten Funktionen in die fachliche IDL und die Sprach-Stubs aufnehmen. Ausgeschlossene Funktionen DÜRFEN NICHT stillschweigend in die IDL gelangen. `generated-but-unsupported` DARF nur verwendet werden, wenn eine Methode aus Kompatibilitätsgründen in der IDL sichtbar sein soll, aber zur Laufzeit deterministisch als nicht unterstützt beantwortet wird.
+Das RPC Surface Profile MUSS mindestens Funktionen als `include`, `exclude`, `generated-but-unsupported` oder `extension` klassifizieren können. Der Generator MUSS für ein aktives RPC Surface Profile nur die als `include` oder explizit als `extension` aktivierten Funktionen in die fachliche IDL und die Sprach-Stubs aufnehmen. Ausgeschlossene Funktionen DÜRFEN NICHT stillschweigend in die IDL gelangen. `generated-but-unsupported` DARF nur verwendet werden, wenn eine Methode aus Kompatibilitätsgründen in der IDL sichtbar sein soll, aber zur Laufzeit deterministisch als nicht unterstützt beantwortet wird.
 
-Das MVP-API-Profil MUSS genau den Kernumfang aus `RPC-MVP-001` als `include` enthalten. Nicht im MVP enthaltene PKCS#11-Funktionen MÜSSEN in der Kompatibilitätsmatrix als außerhalb des MVP, ausgeschlossen oder späteres Profilziel ausgewiesen werden.
+Jeder Generatorlauf MUSS genau ein aktives RPC Surface Profile verwenden. Mehrere RPC Surface Profiles, z. B. für PKCS#11 v2.40 und v3.2, KÖNNEN nebeneinander im Repository existieren, MÜSSEN aber getrennte Eingangsquellen, Mapping-Bezüge und Abnahmebelege besitzen. Das MVP Surface Profile MUSS PKCS#11 v3.2 als Basisversion verwenden und genau den Kernumfang aus `RPC-MVP-001` als `include` enthalten. Nicht im MVP enthaltene PKCS#11-Funktionen MÜSSEN in der Kompatibilitätsmatrix als außerhalb des MVP, ausgeschlossen oder späteres Profilziel ausgewiesen werden.
 
 ### 6.2 Generator
 
@@ -420,9 +420,9 @@ Der Generator MUSS eine gepflegte Mapping-Datei verarbeiten, die Parameter-Richt
 
 Generierte Artefakte MÜSSEN reproduzierbar sein. Gleiche Eingaben MÜSSEN byte-identische IDL-, Stub- und Runtime-Source-Artefakte erzeugen.
 
-#### RPC-FA-GEN-004 – Versionierte Profile
+#### RPC-FA-GEN-004 – Versionierte Surface Profiles
 
-Der Generator MUSS mindestens ein Profil für PKCS#11 v3.2 unterstützen. Unterstützung für PKCS#11 v2.40 SOLLTE als separates Profil möglich sein.
+Der Generator MUSS mindestens ein RPC Surface Profile für PKCS#11 v3.2 unterstützen. Unterstützung für PKCS#11 v2.40 SOLLTE als separates RPC Surface Profile möglich sein. Pro Generatorlauf DARF genau ein RPC Surface Profile aktiv sein.
 
 #### RPC-FA-GEN-005 – Golden-File-Tests
 
@@ -432,9 +432,9 @@ Der Generator MUSS Golden-File-Tests für IDL, Konstanten und ausgewählte Servi
 
 Der Generator MUSS Mapping-Dateien gegen die gepinnten OASIS-Quellen validieren. Unbekannte Funktionen, nicht mehr passende Struct-Felder, widersprüchliche Parameter-Richtungen, unreferenzierte Sonderregeln und nicht deklarierte manuelle Overrides MÜSSEN den Generatorlauf abbrechen.
 
-#### RPC-FA-GEN-007 – API-Profil-Validierung
+#### RPC-FA-GEN-007 – Surface-Profile-Validierung
 
-Der Generator MUSS das aktive PKCS#11-API-Profil gegen die gepinnten OASIS-Quellen und die Mapping-Datei validieren. Ein Profil MUSS fehlschlagen, wenn es unbekannte Funktionen referenziert, eine Funktion zugleich einschließt und ausschließt, eine aktivierte Funktion ohne ausreichendes Mapping enthält oder eine `extension` ohne eigenen Namespace bzw. explizite Kennzeichnung aktiviert.
+Der Generator MUSS das aktive RPC Surface Profile gegen die gepinnten OASIS-Quellen und die Mapping-Datei validieren. Ein Profil MUSS fehlschlagen, wenn es unbekannte Funktionen referenziert, eine Funktion zugleich einschließt und ausschließt, eine aktivierte Funktion ohne ausreichendes Mapping enthält, Funktionen aus einer anderen PKCS#11-Basisversion referenziert oder eine `extension` ohne eigenen Namespace bzw. explizite Kennzeichnung aktiviert.
 
 #### RPC-FA-GEN-008 – Runtime-Source-Ausgabe
 
@@ -1035,7 +1035,7 @@ Ein automatisierter oder reproduzierbarer Starttest MUSS zeigen, dass Profile ih
 
 ### RPC-MENGE-001 – MVP-Umfang API
 
-Der MVP umfasst genau die im MVP-API-Profil als `include` markierten 19 PKCS#11-Funktionen aus `RPC-MVP-001`. Weitere PKCS#11-Funktionen DÜRFEN die MVP-IDL nicht erweitern, solange sie nicht in ein neues oder erweitertes API-Profil aufgenommen werden.
+Der MVP umfasst genau die im MVP Surface Profile als `include` markierten 19 PKCS#11-Funktionen aus `RPC-MVP-001`. Weitere PKCS#11-Funktionen DÜRFEN die MVP-IDL nicht erweitern, solange sie nicht in ein neues oder erweitertes RPC Surface Profile aufgenommen werden.
 
 ### RPC-MENGE-002 – Sessions
 
@@ -1083,6 +1083,7 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | Peer-Allowlist | Liste vertrauenswürdiger Peer-Adressen oder Proxy-/Mesh-Identitäten, die Header-Identitäten setzen dürfen. |
 | PKCS#11 | Standardisierte API für kryptografische Tokens und HSMs. |
 | Produktionsfähig deklariert | Profilstatus mit dokumentierter Betriebsgrenze, Security-Konfiguration und bestandener domänenspezifischer Abnahme. |
+| RPC Surface Profile | Maschinenlesbares Profil, das genau eine PKCS#11-Basisversion, den in IDL/Stubs sichtbaren Funktionsumfang und optionale Extensions für einen Generatorlauf festlegt. |
 | SBOM | Software Bill of Materials; maschinenlesbare Liste eingesetzter Abhängigkeiten und Lizenzen. |
 | Secret-Quelle | Externes System oder lokale Konfiguration, aus der PINs, Tokens, Zertifikate oder Provider-Credentials geladen werden. |
 | Semantisch 1:1 | Gleiche fachliche Operation und Fehlersemantik, aber transportgerechte Datentypen statt C-Pointer. |

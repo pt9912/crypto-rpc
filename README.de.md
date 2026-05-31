@@ -57,9 +57,11 @@ M1-Slice — getriggert in
   erzeugt; identische Eingaben produzieren byte-identische Artefakte
   ([`RPC-FA-GEN-003`](spec/lastenheft.md)); Golden-File-Tests sichern
   gegen Drift.
-- **Per Profil begrenzte PKCS#11-Fläche.** Das aktive API-Profil
-  entscheidet, welche PKCS#11-Funktionen in IDL und Stubs gelangen.
-  Das MVP-Profil enthält nur die 19 Kernfunktionen aus `RPC-MVP-001`
+- **Per Profil begrenzte PKCS#11-Fläche.** Das aktive RPC Surface
+  Profile entscheidet, welche PKCS#11-Funktionen in IDL und Stubs
+  gelangen. Jedes generierte Surface ist an genau eine
+  PKCS#11-Basisversion gebunden; das MVP-Profil nutzt v3.2 und enthält
+  nur die 19 Kernfunktionen aus `RPC-MVP-001`
   ([`RPC-FA-IDL-007`](spec/lastenheft.md)).
 - **Transportneutraler Vertrag.** gRPC und TCP-RPC sind
   Transportprofile über derselben fachlichen Semantik. TLS/mTLS ist
@@ -156,7 +158,7 @@ Kapitel 4:
 - eine Protobuf-IDL `cryptorpc.pkcs11.v1` aus gepinnten OASIS-PKCS#11-
   v3.2-Headern für 19 Kernfunktionen generieren
   ([`RPC-MVP-001`](spec/lastenheft.md))
-- die generierte PKCS#11-Fläche über das aktive MVP-API-Profil
+- die generierte PKCS#11-Fläche über das aktive MVP RPC Surface Profile
   begrenzen; Funktionen außerhalb des Profils gelangen nicht in die
   MVP-IDL ([`RPC-FA-IDL-007`](spec/lastenheft.md))
 - einen Go-Referenzserver liefern, der die Kern-API gegen SoftHSM v2
@@ -191,9 +193,9 @@ Abnahme über `RPC-ACCEPT-001…005`.
 ## Geplante Funktionsbereiche
 
 - Generator-Pipeline `crypto-rpc-gen` (Go) — parst OASIS-Header,
-  wendet eine handgepflegte Mapping-Datei und das aktive API-Profil an,
-  emittiert kanonische Protobuf-IDL, Per-Sprach-Stubs und optionale
-  Runtime-Source-Artefakte
+  wendet eine handgepflegte Mapping-Datei und das aktive RPC Surface
+  Profile an, emittiert kanonische Protobuf-IDL, Per-Sprach-Stubs und
+  optionale Runtime-Source-Artefakte
 - Transportprofile für gRPC und framed TCP-RPC mit Protobuf-Binary plus
   optionalen MessagePack-Payloads und expliziten Laufzeitschaltern für
   Transport-Security und Identitätsquelle
