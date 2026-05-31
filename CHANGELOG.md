@@ -128,12 +128,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Noch keine Bugfixes — Repository ist in der Anforderungs- und
   Planungsphase.
-
-### Code-Review
-
-- ADR-0001 mit `/code-review` (xhigh effort) geprüft; fünf Findings
-  surfaced (zwei echte Inkonsistenzen `§2.1` ↔ `RPC-ARCH-001` und
-  `§4` ↔ `§2.3`/`§2.5`, ein falscher ID-Bezug `§5` → `RPC-NFA-SEC-005`,
-  zwei Mehrdeutigkeiten). Findings sind offen; Auflösung folgt über
-  eine Folge-ADR (siehe `docs/plan/planning/open/001-build-container-harness.md`
-  Punkt 3).
