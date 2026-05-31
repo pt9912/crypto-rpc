@@ -177,6 +177,8 @@ Abnahme über `RPC-ACCEPT-001…005`.
 
 ```text
 .
+├── CHANGELOG.md                    ← Keep a Changelog 1.1.0 + SemVer
+├── LICENSE                         ← MIT
 ├── README.md                       ← englische Version
 ├── README.de.md                    ← deutsche Version (dieses Dokument)
 ├── spec/

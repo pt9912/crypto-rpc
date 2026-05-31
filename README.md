@@ -173,6 +173,8 @@ Acceptance covered by `RPC-ACCEPT-001…005`.
 
 ```text
 .
+├── CHANGELOG.md                    ← Keep a Changelog 1.1.0 + SemVer
+├── LICENSE                         ← MIT
 ├── README.md                       ← English version (this document)
 ├── README.de.md                    ← German version
 ├── spec/
