@@ -6,7 +6,7 @@
 | Kurzbeschreibung | Monorepo für gleichrangige RPC-Domänen: PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM; MVP zunächst PKCS#11 |
 | Zielplattform    | Linux-Container und native Linux-Server; PKCS#11-HSMs, Netzwerk-HSMs, Cloud-HSMs und Cloud-KMS-Dienste wie AWS KMS, Google Cloud KMS und Azure Key Vault / Managed HSM |
 | Hauptnutzer      | Entwickler und Plattformteams, die PKCS#11-, Cloud-KMS-, Netzwerk-HSM- oder Cloud-HSM-Operationen über Prozess-, Host- oder Sprachgrenzen hinweg nutzbar machen müssen |
-| Version          | 0.2                                                                        |
+| Version          | 0.3                                                                        |
 | Status           | Entwurf, fachlich verfeinert                                               |
 | Datum            | 2026-05-31                                                                 |
 | Begleitdokument  | [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation; [spec/architecture.md](architecture.md) – Architekturüberblick |
@@ -133,7 +133,7 @@ Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Re
 
 Der Dienst SOLL Kryptografie-Backends über Prozess-, Host- und Sprachgrenzen hinweg nutzbar machen, ohne die fachliche Semantik der jeweiligen Domäne zu verstecken.
 
-Für PKCS#11 sollen Anwendungen dieselben Operationen, Returncodes, Sessions, Handles und Mechanisms sehen, aber über stabile, sprachneutrale RPC-Typen statt über C-Pointer und C-ABI arbeiten. Für Cloud-KMS-Szenarien SOLL das Monorepo eine getrennte, ressourcenorientierte API-Familie ermöglichen, die Key-Ressourcen, Key-Versionen, `Encrypt`/`Decrypt`, `Sign`/`Verify`, `WrapKey`/`UnwrapKey` und `GenerateDataKey` modelliert. Netzwerk-HSM und Cloud-HSM SOLLEN als eigene gleichrangige Domänen mit eigenen Betriebs-, Profil- und Abnahmeanforderungen behandelt werden, auch wenn sie im PKCS#11-Fall dieselbe API-Familie nutzen können.
+Für PKCS#11 SOLLEN Anwendungen dieselben Operationen, Returncodes, Sessions, Handles und Mechanisms sehen, aber über stabile, sprachneutrale RPC-Typen statt über C-Pointer und C-ABI arbeiten. Für Cloud-KMS-Szenarien SOLL das Monorepo eine getrennte, ressourcenorientierte API-Familie ermöglichen, die Key-Ressourcen, Key-Versionen, `Encrypt`/`Decrypt`, `Sign`/`Verify`, `WrapKey`/`UnwrapKey` und `GenerateDataKey` modelliert. Netzwerk-HSM und Cloud-HSM SOLLEN als eigene gleichrangige Domänen mit eigenen Betriebs-, Profil- und Abnahmeanforderungen behandelt werden, auch wenn sie im PKCS#11-Fall dieselbe API-Familie nutzen können.
 
 ### RPC-ZB-003 – Muss-/Soll-/Kann-Ziele
 
@@ -184,7 +184,7 @@ Die primäre Betriebsumgebung MUSS sein:
 
 - Linux x86_64 als Container oder nativer Prozess,
 - mindestens eines der unterstützten Backend-Profile: PKCS#11/SoftHSM, Netzwerk-HSM, Cloud-HSM oder Cloud-KMS,
-- Netzwerkinfrastruktur zwischen Client und Server für gRPC und TCP-RPC; TLS/mTLS ist profilabhängig optional.
+- Netzwerkkonnektivität (Loopback oder LAN) zwischen Client und Server für gRPC und TCP-RPC; TLS/mTLS ist profilabhängig optional.
 
 Sekundäre Umgebungen, die im CI mitgeführt werden SOLLEN:
 
@@ -248,7 +248,7 @@ Folgende Use Cases SOLLEN unterstützt werden:
 | --------------------- | ---------------- | ------------------------------------------------------------------------------ |
 | `crypto-rpc-gen`      | Go               | Parser, Modellbildung, Mapping-Anwendung, Protobuf- und Runtime-Source-Generierung |
 | `proto/pkcs11/v1`     | Proto3           | kanonische RPC-IDL, Messages, Services, Returncode-Modell                      |
-| `proto/kms/v1`        | Proto3           | Cloud-KMS-IDL mit ressourcenorientierten Key-Operationen                       |
+| `proto/kms/v1`        | Proto3           | Cloud-KMS-IDL mit ressourcenorientierten Key-Operationen (post-MVP)            |
 | `transport/grpc`      | gRPC             | gRPC-Transportprofil, optionale TLS/mTLS-Terminierung, Mapping auf generierte Services |
 | `transport/tcp-rpc`   | TCP              | Framing-basiertes TCP-RPC-Transportprofil, optionale TLS/mTLS-Terminierung, Mapping auf dieselbe fachliche RPC-Semantik |
 | `server/pkcs11-go`    | Go               | PKCS#11-Referenzserver auf Basis generierter Go-Server-Stubs, Backend-Integration, Session-/Handle-Verwaltung, Audit, Metriken |
@@ -300,7 +300,7 @@ Akzeptanz: Golden-File-Test vergleicht die aus dem MVP Surface Profile generiert
 
 Der MVP MUSS einen Go-Referenzserver bereitstellen, der die Kern-API gegen SoftHSM v2 ausführen kann.
 
-Akzeptanz: Ein Integrationstest initialisiert einen SoftHSM-Token, meldet sich gemäß SoftHSM-Profil an, findet einen privaten Schlüssel und erzeugt über RPC eine gültige Signatur.
+Akzeptanz: Ein Integrationstest initialisiert einen SoftHSM-Token, meldet sich gemäß SoftHSM-Profil an, findet einen privaten Schlüssel und erzeugt über RPC eine gültige Signatur. Dieser Integrationstest ist zugleich der funktionale Abnahmebeleg aus `RPC-ACCEPT-001`.
 
 ### RPC-MVP-003 – Client- und Server-Stubs
 
@@ -396,7 +396,7 @@ PKCS#11-Handles (`CK_SESSION_HANDLE`, `CK_OBJECT_HANDLE`) MÜSSEN im RPC als opa
 
 #### RPC-FA-IDL-006 – Größen- und Streaming-Grenzen
 
-Die IDL MUSS für Byte-Felder und wiederholte Felder dokumentierte Größenlimits abbilden oder referenzieren können. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
+Die IDL MUSS für Byte-Felder und wiederholte Felder Größenlimits explizit ausweisen. Zulässige Mechanismen sind dokumentierte IDL-Optionen, normative Kommentar-Annotationen direkt am Feld oder ein Verweis auf eine zentrale Limit-Tabelle gemäß `RPC-MENGE-005`. Der gewählte Mechanismus MUSS für ein RPC Surface Profile einheitlich sein. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
 
 #### RPC-FA-IDL-007 – Einschränkbarer PKCS#11-RPC-Surface
 
@@ -404,7 +404,7 @@ Der PKCS#11-RPC-Umfang MUSS über ein maschinenlesbares RPC Surface Profile eins
 
 Das RPC Surface Profile MUSS mindestens Funktionen als `include`, `exclude`, `generated-but-unsupported` oder `extension` klassifizieren können. Der Generator MUSS für ein aktives RPC Surface Profile nur die als `include` oder explizit als `extension` aktivierten Funktionen in die fachliche IDL und die Sprach-Stubs aufnehmen. Ausgeschlossene Funktionen DÜRFEN NICHT stillschweigend in die IDL gelangen. `generated-but-unsupported` DARF nur verwendet werden, wenn eine Methode aus Kompatibilitätsgründen in der IDL sichtbar sein soll, aber zur Laufzeit deterministisch als nicht unterstützt beantwortet wird.
 
-Jeder Generatorlauf MUSS genau ein aktives RPC Surface Profile verwenden. Mehrere RPC Surface Profiles, z. B. für PKCS#11 v2.40 und v3.2, KÖNNEN nebeneinander im Repository existieren, MÜSSEN aber getrennte Eingangsquellen, Mapping-Bezüge und Abnahmebelege besitzen. Das MVP Surface Profile MUSS PKCS#11 v3.2 als Basisversion verwenden und genau den Kernumfang aus `RPC-MVP-001` als `include` enthalten. Nicht im MVP enthaltene PKCS#11-Funktionen MÜSSEN in der Kompatibilitätsmatrix als außerhalb des MVP, ausgeschlossen oder späteres Profilziel ausgewiesen werden.
+Jeder Generatorlauf MUSS genau ein aktives RPC Surface Profile verwenden (siehe auch `RPC-FA-GEN-004`). Mehrere RPC Surface Profiles, z. B. für PKCS#11 v2.40 und v3.2, KÖNNEN nebeneinander im Repository existieren, MÜSSEN aber getrennte Eingangsquellen, Mapping-Bezüge und Abnahmebelege besitzen. Das MVP Surface Profile MUSS PKCS#11 v3.2 als Basisversion verwenden und genau den Kernumfang aus `RPC-MVP-001` als `include` enthalten. Nicht im MVP enthaltene PKCS#11-Funktionen MÜSSEN in der Kompatibilitätsmatrix als außerhalb des MVP, ausgeschlossen oder späteres Profilziel ausgewiesen werden.
 
 ### 6.2 Generator
 
@@ -440,7 +440,7 @@ Der Generator MUSS das aktive RPC Surface Profile gegen die gepinnten OASIS-Quel
 
 Der Generator MUSS Runtime-Code als Source-Artefakt je unterstützter Zielsprache ausgeben können. Runtime-Source-Artefakte umfassen sprachspezifische Hilfen für Client- und Servernutzung, Transportauswahl, Fehler-/Returncode-Behandlung, Konfiguration und Test-Harnesses, soweit diese nicht rein fachliche PKCS#11-Semantik verändern.
 
-Runtime-Source-Artefakte MÜSSEN als lesbarer Quellcode ausgegeben werden und DÜRFEN NICHT ausschließlich als Binärpaket, Container-Image oder extern aufzulösende Abhängigkeit bereitgestellt werden. Sie MÜSSEN dieselben Lizenz-, Provenienz- und Reproduzierbarkeitsregeln erfüllen wie generierte IDL- und Stub-Artefakte.
+Runtime-Source-Artefakte MÜSSEN als lesbarer Quellcode ausgegeben werden und DÜRFEN NICHT ausschließlich als Binärpaket, Container-Image oder extern aufzulösende Abhängigkeit bereitgestellt werden. Zusätzliche binäre Distributionsformen (z. B. Maven-, NuGet-, Go-Module- oder Container-Images) DÜRFEN als ergänzender Auslieferungsweg bereitgestellt werden, solange sie aus denselben Source-Artefakten reproduzierbar erzeugt werden und die Source-Artefakte unverändert verfügbar bleiben. Sie MÜSSEN dieselben Lizenz-, Provenienz- und Reproduzierbarkeitsregeln erfüllen wie generierte IDL- und Stub-Artefakte.
 
 #### RPC-FA-GEN-009 – Hexagonale Runtime-Option
 
@@ -480,11 +480,11 @@ Single-Part-Operationen wie `C_Sign` und `C_GenerateRandom` MÜSSEN als Unary RP
 
 #### RPC-FA-RPC-002 – Streaming für Multi-Part-Operationen
 
-Multi-Part-Operationen wie `C_SignUpdate`/`C_SignFinal` SOLLEN als zustandsbehaftete RPC-Sequenz modelliert werden und KÖNNEN zusätzlich als gRPC-Streaming bereitgestellt werden.
+Multi-Part-Operationen wie `C_SignUpdate`/`C_SignFinal` MÜSSEN als zustandsbehaftete Sequenz aus Unary-RPCs modelliert werden, damit sie ohne transportspezifische Abweichungen über gRPC und TCP-RPC ausführbar sind. Über gRPC KÖNNEN sie zusätzlich als bidirektionales Streaming-RPC bereitgestellt werden; das TCP-RPC-Profil nutzt ausschließlich die Unary-Sequenz und MUSS keine eigene Streaming-Variante anbieten.
 
 #### RPC-FA-RPC-003 – Deadline und Cancellation
 
-RPC-Deadlines und Cancellation MÜSSEN serverseitig respektiert werden. Abgebrochene Operationen MÜSSEN PKCS#11-Session-State konsistent aufräumen oder als beschädigt markieren.
+RPC-Deadlines und Cancellation MÜSSEN serverseitig respektiert werden. Abgebrochene Operationen MÜSSEN PKCS#11-Session-State konsistent aufräumen oder als beschädigt markieren. Für gRPC wird das eingebaute Deadline-/Cancel-Signal verwendet; für TCP-RPC MUSS das Cancel-/Abort-Signal aus `RPC-API-TRANSPORT-002` verwendet werden, damit Cancellation auch ohne Verbindungsabbruch möglich ist.
 
 ### 6.5 Session- und Objektmodell
 
@@ -580,11 +580,13 @@ Die Protobuf-IDL MUSS versionierte Pakete verwenden, z. B. `cryptorpc.pkcs11.v1`
 
 ### RPC-API-TRANSPORT-001 – Transportprofile
 
-Der RPC-Server MUSS mindestens zwei Transportprofile unterstützen: gRPC und TCP-RPC. Beide Transportprofile MÜSSEN dieselbe fachliche PKCS#11-RPC-Semantik, dieselben `CK_RV`-Response-Regeln, dieselben Authentisierungs-/Autorisierungsentscheidungen und dieselben Auditpflichten verwenden.
+Der RPC-Server MUSS mindestens zwei Transportprofile unterstützen: gRPC und TCP-RPC (Technologiebezug siehe `RPC-TECH-002`). Beide Transportprofile MÜSSEN dieselbe fachliche PKCS#11-RPC-Semantik, dieselben `CK_RV`-Response-Regeln, dieselben Authentisierungs-/Autorisierungsentscheidungen und dieselben Auditpflichten verwenden.
 
 ### RPC-API-TRANSPORT-002 – TCP-RPC-Framing
 
-TCP-RPC MUSS als eigenständiges, längenbegrenztes und versioniertes Framing über TCP spezifiziert werden. Das Framing MUSS Request-ID, Method-Identifier, Payload-Länge, Protokollversion und Fehlerklasse transportieren können und MUSS maximale Frame- und Message-Größen erzwingen.
+TCP-RPC MUSS als eigenständiges, längenbegrenztes und versioniertes Framing über TCP spezifiziert werden. Das Framing MUSS Request-ID, Method-Identifier, Payload-Länge, Wire-Format-Version, Fehlerklasse und ein Cancel-/Abort-Signal transportieren können und MUSS maximale Frame- und Message-Größen erzwingen. Das Cancel-/Abort-Signal MUSS es einem Client erlauben, eine laufende Request-ID gezielt abzubrechen, damit `RPC-FA-RPC-003` für das TCP-RPC-Profil ohne Verbindungsabbruch erfüllbar ist.
+
+Die TCP-RPC-Wire-Format-Version MUSS unabhängig von der IDL-Paketversion aus `RPC-API-PROTO-001` geführt werden und MUSS in einem Quellenmanifest die jeweils kompatiblen IDL-Major-Versionen (z. B. `cryptorpc.pkcs11.v1`) ausweisen. Ein Verbindungsaufbau, dessen Wire-Format-Version der Server nicht unterstützt oder dessen angeforderte IDL-Major-Version nicht zur ausgehandelten Wire-Format-Version passt, MUSS deterministisch und mit unterscheidbarer Fehlerklasse abgelehnt werden; ein stiller Fallback auf eine andere Version ist ausgeschlossen.
 
 ### RPC-API-TRANSPORT-003 – TCP-RPC-Payload-Codecs
 
@@ -667,7 +669,7 @@ Akzeptanz: Ein Benchmark-Skript misst direkten PKCS#11-Aufruf und RPC-Aufruf im 
 
 Der Server MUSS parallele Sessions unterstützen. Der MVP SOLL mindestens 32 gleichzeitige Sessions gegen SoftHSM ohne Session-Leak verwalten.
 
-Akzeptanz: Ein Lasttest öffnet mindestens 32 parallele Sessions, führt pro Session eine einfache Operation aus und weist nach Testende geschlossene oder abgelaufene Sessions ohne Leaks nach.
+Akzeptanz: Sobald die SOLL-Zielmarke von 32 parallelen Sessions umgesetzt wird, MUSS ein Lasttest mindestens 32 parallele Sessions öffnen, pro Session eine einfache Operation ausführen und nach Testende geschlossene oder abgelaufene Sessions ohne Leaks nachweisen. Wird die SOLL-Zielmarke gemäß `RPC-LESE-001` begründet zurückgestellt, MUSS die Begründung im Abnahmebeleg dokumentiert und das tatsächlich getestete Konkurrenzniveau ausgewiesen werden; die Pflicht zur Unterstützung paralleler Sessions als solche bleibt davon unberührt.
 
 ### 8.2 Skalierbarkeit und Hochverfügbarkeit
 
@@ -770,6 +772,8 @@ crypto-rpc/
   docs/
   spec/
 ```
+
+Netzwerk-HSM- und Cloud-HSM-Backends werden nicht als eigene Serverpakete geführt, sondern über Profile in `profiles/` an `server/pkcs11-go/` angeschlossen, solange sie über eine PKCS#11-Client-Library zugänglich sind (`RPC-PUE-004`, `RPC-FA-BACKEND-001`, `RPC-FA-BACKEND-002`). Eine eigene Serverkomponente außerhalb von `server/pkcs11-go/` MUSS erst entstehen, wenn ein Backend nachweislich keine PKCS#11-Semantik mehr trägt; eine solche Änderung MUSS über einen Architekturentscheid begründet werden.
 
 ### RPC-ARCH-002 – Kanonisches Zwischenmodell
 
@@ -1068,12 +1072,13 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | Cloud-HSM | Cloud-Dienst, der HSM-Cluster bereitstellt und häufig PKCS#11-Client-Libraries anbietet. |
 | Cloud-KMS | Cloud-Dienst mit ressourcenorientierter Key-Management- und Kryptografie-API, meist ohne PKCS#11-Sessions und Handles. |
 | Credential-Referenz | Nicht geheimer Verweis auf ein serverseitig konfiguriertes oder extern auflösbares Secret. |
+| Driven-Adapter | In hexagonaler Architektur ein Adapter, über den der fachliche Kern externe Ressourcen anspricht (z. B. PKCS#11-Modul, Cloud-KMS-SDK, Audit-Sink). |
+| Driving-Adapter | In hexagonaler Architektur ein Adapter, der den fachlichen Kern von außen aufruft (z. B. ein gRPC- oder TCP-RPC-Transportadapter). |
 | gRPC | RPC-Framework auf Basis von HTTP/2 und Protobuf; eines der unterstützten Transportprofile. |
 | Header-Identität | Client-Identität, die von einem vertrauenswürdigen Proxy oder Mesh über ein konfiguriertes Header-Feld weitergegeben wird. |
 | IAM/RBAC | Identity & Access Management bzw. Role-Based Access Control; Berechtigungsmodelle in Cloud- und Plattformsystemen. |
 | IDL | Interface Definition Language, hier Protobuf. |
 | Identitätsquelle | Konfigurierter Ursprung der Client-Identität, z. B. mTLS-Zertifikat, Proxy-Header oder keine transportseitige Identität. |
-| KEM | Key Encapsulation Mechanism; für spätere PQC-Erweiterungen relevant. |
 | Lease | Zeitlich begrenzte serverseitige Reservierung einer Ressource (z. B. einer Session) mit Idle-Timeout. |
 | Mapping-Datei | Manuell gepflegte Semantik-Ergänzung zu den OASIS-Headern. |
 | mTLS | Mutual TLS – beidseitige Authentisierung über X.509-Zertifikate. |
@@ -1088,7 +1093,9 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | Secret-Quelle | Externes System oder lokale Konfiguration, aus der PINs, Tokens, Zertifikate oder Provider-Credentials geladen werden. |
 | Semantisch 1:1 | Gleiche fachliche Operation und Fehlersemantik, aber transportgerechte Datentypen statt C-Pointer. |
 | Signing Oracle | Missbrauchsmuster, bei dem ein Dienst wiederholt Signaturen für vom Angreifer gewählte Daten erzeugt. |
+| Sticky-Session | Lastverteilungsstrategie, bei der ein Client für die Dauer einer Session demselben Server-Replica zugeordnet bleibt, damit lokal gehaltene Session-Handles wiederverwendbar sind. |
 | TCP-RPC | Eigenes, framing-basiertes RPC-Transportprofil über TCP mit optionalem TLS/mTLS und derselben fachlichen Semantik wie das gRPC-Profil. |
+| Wire-Format-Version | Versionsnummer des TCP-RPC-Framings selbst; getrennt von der IDL-Paketversion, aber explizit auf kompatible IDL-Major-Versionen abgebildet. |
 
 ---
 
