@@ -37,7 +37,7 @@ Eine Anforderung gilt nur dann als erfüllt, wenn der zugehörige Belegtyp im Re
 | Anforderungsklasse                  | Zulässiger Beleg                                                                   |
 | ----------------------------------- | ---------------------------------------------------------------------------------- |
 | Funktionale Anforderungen (`FA-*`)  | automatisierter Integrationstest gegen SoftHSM oder reproduzierbarer manueller Test |
-| Generator (`FA-GEN-*`)              | Golden-File-Test für generierte IDL, Client-Stubs und Server-Stubs plus Parser-Test gegen gepinnte OASIS-Quellen |
+| Generator (`FA-GEN-*`)              | Golden-File-Test für generierte IDL, Client-Stubs, Server-Stubs und Runtime-Source-Artefakte plus Parser-Test gegen gepinnte OASIS-Quellen |
 | Protokoll und API (`API-*`)         | Protobuf-Artefakt, generierte Client-/Server-Stubs und Kontrakttest                 |
 | Produkteinsatz und Use Cases (`PE-*`) | Trace auf funktionale Anforderungen oder automatisierter/reproduzierbarer Use-Case-Test |
 | Produktübersicht und Vertrauensgrenzen (`PUE-*`) | Architektur- oder Sicherheitsbeleg gemäß Inhalt der Anforderung                         |
@@ -62,7 +62,7 @@ IDs folgen dem Muster `RPC-<Bereich>-<NNN>` mit dreistelliger Nummer. Bereiche i
 
 `LESE`, `ZB`, `PE`, `PUE`, `MVP`, `NONGOAL`,
 `FA-IDL`, `FA-GEN`, `FA-P11`, `FA-RPC`, `FA-SESSION`, `FA-OBJ`, `FA-CRYPTO`, `FA-ERR`, `FA-AUDIT`, `FA-BACKEND`,
-`API-PROTO`, `API-GO`, `API-JAVA`, `API-KOTLIN`, `API-CSHARP`, `API-CFG`, `API-KMS`,
+`API-PROTO`, `API-TRANSPORT`, `API-GO`, `API-JAVA`, `API-KOTLIN`, `API-CSHARP`, `API-CFG`, `API-KMS`,
 `NFA-PERF`, `NFA-SCALE`, `NFA-HA`, `NFA-SEC`, `NFA-OBS`, `NFA-OPS`, `NFA-MAINT`, `NFA-PORT`,
 `ARCH`, `PRINC`,
 `TECH`, `ENV`, `OPS-MON`, `OPS-CFG`,
@@ -88,9 +88,9 @@ Sofern eine Anforderung Performance, Latenz oder Durchsatz benennt, gilt – wen
 
 - Linux x86_64, Kernel ≥ 6.1
 - 4 vCPU, 8 GiB RAM je Server-Replica
-- gRPC über Loopback oder lokales 10-GbE-VLAN
+- gRPC oder TCP-RPC über Loopback oder lokales 10-GbE-VLAN; TLS/mTLS abhängig vom Transportprofil
 - Go ≥ 1.22 für Generator und Referenzserver
-- Protobuf/gRPC als primäres IDL- und Transportformat
+- Protobuf als kanonische IDL; gRPC und TCP-RPC als Transportprofile
 - HSM: SoftHSM v2 lokal als funktionale Referenz
 
 ### RPC-LESE-006 – SoftHSM-Abgrenzung
@@ -125,9 +125,9 @@ Ein Backend-Profil oder Adapter DARF nur als produktionsfähig deklariert werden
 
 `crypto-rpc` MUSS ein Monorepo für vier gleichrangige Kryptografie-RPC-Domänen bereitstellen: PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM.
 
-Der MVP MUSS zunächst die PKCS#11-API semantisch 1:1 abbilden und aus offiziellen OASIS-PKCS#11-Quellen reproduzierbar generierbare IDL-, Client-Stub- und Server-Stub-Artefakte für Go, Java, Kotlin und C# erzeugen. Cloud-KMS, Netzwerk-HSM und Cloud-HSM sind gleichrangige Ziel-Domänen, blockieren den MVP aber nicht.
+Der MVP MUSS zunächst die PKCS#11-API semantisch 1:1 abbilden und aus offiziellen OASIS-PKCS#11-Quellen reproduzierbar generierbare IDL-, Client-Stub-, Server-Stub- und Runtime-Source-Artefakte für Go, Java, Kotlin und C# erzeugen können. Cloud-KMS, Netzwerk-HSM und Cloud-HSM sind gleichrangige Ziel-Domänen, blockieren den MVP aber nicht.
 
-Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Client- und Server-Stubs für Go/Java/Kotlin/C# und führt eine Signatur-Operation über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
+Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Client- und Server-Stubs sowie Runtime-Source-Artefakte für Go/Java/Kotlin/C# und führt eine Signatur-Operation über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
 
 ### RPC-ZB-002 – Produktvision
 
@@ -144,7 +144,7 @@ Für PKCS#11 sollen Anwendungen dieselben Operationen, Returncodes, Sessions, Ha
 | MUSS   | MVP: Generator aus OASIS-Headern plus gepflegter Mapping-Datei für PKCS#11-RPC-Semantik.                  |
 | MUSS   | MVP: Protobuf-IDL als kanonische RPC-Schnittstelle für PKCS#11.                                           |
 | MUSS   | MVP: Go-Referenzserver mit internem PKCS#11-Backend über `miekg/pkcs11` oder äquivalentes Binding.        |
-| MUSS   | MVP: generierte Go-, Java-, Kotlin- und C#-Client- und Server-Stubs für PKCS#11.                          |
+| MUSS   | MVP: generierte Go-, Java-, Kotlin- und C#-Client- und Server-Stubs sowie Runtime-Source-Artefakte für PKCS#11. |
 | MUSS   | MVP: numerische PKCS#11-Returncodes (`CK_RV`) in jeder fachlichen Response erhalten.                      |
 | SOLLTE | Mapping für Mechanism- und Attribute-Parameter typsicher modellieren, soweit die Spezifikation dies zulässt. |
 | SOLLTE | Mehrere PKCS#11-Versionen über versionierte Mapping-Profile unterstützen.                                 |
@@ -184,7 +184,7 @@ Die primäre Betriebsumgebung MUSS sein:
 
 - Linux x86_64 als Container oder nativer Prozess,
 - mindestens eines der unterstützten Backend-Profile: PKCS#11/SoftHSM, Netzwerk-HSM, Cloud-HSM oder Cloud-KMS,
-- gRPC/TLS-1.3-fähige Netzwerkinfrastruktur zwischen Client und Server.
+- Netzwerkinfrastruktur zwischen Client und Server für gRPC und TCP-RPC; TLS/mTLS ist profilabhängig optional.
 
 Sekundäre Umgebungen, die im CI mitgeführt werden SOLLEN:
 
@@ -223,7 +223,7 @@ Folgende Use Cases SOLLEN unterstützt werden:
 ### RPC-PUE-001 – Systemkontext
 
 ```text
-+----------------------+       gRPC/TLS        +----------------------+
++----------------------+  gRPC or TCP-RPC   +----------------------+
 | Go / Java / Kotlin   |  <----------------->  | crypto-rpc-server    |
 | C# Client-Stubs      |                       | Go Server-Stubs      |
 +----------+-----------+                       +----------+-----------+
@@ -246,15 +246,17 @@ Folgende Use Cases SOLLEN unterstützt werden:
 
 | Komponente            | Sprache / Format | Verantwortung                                                                  |
 | --------------------- | ---------------- | ------------------------------------------------------------------------------ |
-| `crypto-rpc-gen`      | Go               | Parser, Modellbildung, Mapping-Anwendung, Protobuf-Generierung                 |
+| `crypto-rpc-gen`      | Go               | Parser, Modellbildung, Mapping-Anwendung, Protobuf- und Runtime-Source-Generierung |
 | `proto/pkcs11/v1`     | Proto3           | kanonische RPC-IDL, Messages, Services, Returncode-Modell                      |
 | `proto/kms/v1`        | Proto3           | Cloud-KMS-IDL mit ressourcenorientierten Key-Operationen                       |
+| `transport/grpc`      | gRPC             | gRPC-Transportprofil, optionale TLS/mTLS-Terminierung, Mapping auf generierte Services |
+| `transport/tcp-rpc`   | TCP              | Framing-basiertes TCP-RPC-Transportprofil, optionale TLS/mTLS-Terminierung, Mapping auf dieselbe fachliche RPC-Semantik |
 | `server/pkcs11-go`    | Go               | PKCS#11-Referenzserver auf Basis generierter Go-Server-Stubs, Backend-Integration, Session-/Handle-Verwaltung, Audit, Metriken |
 | `server/kms-go`       | Go               | KMS-Server/Adapter für Cloud-KMS-Profile (post-MVP)                            |
-| `runtime/go`          | Go               | generierte Go-Client- und Go-Server-Stubs sowie handgeschriebene Client-/Server-Hilfen |
-| `runtime/java`        | Java             | generierte Java-Client- und Java-Server-Stubs sowie optionale ergonomische Wrapper |
-| `runtime/kotlin`      | Kotlin           | generierte oder Kotlin-kompatible Client-/Server-Stubs und Coroutine-fähige Wrapper |
-| `runtime/csharp`      | C#               | generierte .NET-Client- und .NET-Server-Stubs sowie optionale Wrapper          |
+| `runtime/go`          | Go               | generierte Go-Client- und Go-Server-Stubs sowie als Source ausgebbare Client-/Server-Hilfen |
+| `runtime/java`        | Java             | generierte Java-Client- und Java-Server-Stubs sowie als Source ausgebbare ergonomische Wrapper |
+| `runtime/kotlin`      | Kotlin           | generierte oder Kotlin-kompatible Client-/Server-Stubs und als Source ausgebbare Coroutine-fähige Wrapper |
+| `runtime/csharp`      | C#               | generierte .NET-Client- und .NET-Server-Stubs sowie als Source ausgebbare Wrapper |
 | `mappings/`           | YAML             | manuelle Semantik-Ergänzungen für Pointer, Buffer, Structs und Sonderfälle (YAML ist kanonisch) |
 | `profiles/`           | YAML             | Betriebsprofile für SoftHSM, Netzwerk-HSMs, Cloud-HSMs und Cloud-KMS-Provider (YAML ist kanonisch) |
 | `third_party/oasis/`  | Header/Markdown  | gepinnte OASIS-PKCS#11-Quellen oder Reproduktionshinweise                      |
@@ -263,7 +265,7 @@ Folgende Use Cases SOLLEN unterstützt werden:
 
 Folgende Vertrauensgrenzen MÜSSEN als solche dokumentiert und in Code/Konfiguration durchgesetzt werden:
 
-- **Client ↔ RPC-Server**: TLS 1.3 MUSS unterstützt werden; mTLS oder ein äquivalentes starkes Client-Authentisierungsverfahren MUSS konfigurierbar sein.
+- **Client ↔ RPC-Server**: gRPC und TCP-RPC MÜSSEN ohne TLS/mTLS generierbar und betreibbar sein. TLS 1.3 und mTLS KÖNNEN je Transportprofil aktiviert werden; Profile MÜSSEN explizit dokumentieren, ob TLS/mTLS serverseitig terminiert, extern terminiert oder nicht verwendet wird.
 - **RPC-Server ↔ PKCS#11-HSM / Netzwerk-HSM / Cloud-HSM**: PKCS#11-Modulpfad, Slot-/Token-Auswahl, PIN/Secrets, Vendor-Client-Konfiguration und Netzwerk-Timeouts MÜSSEN serverseitig kontrolliert werden.
 - **RPC-Server ↔ Cloud-KMS**: Cloud-Credentials, Provider-Region, Key-Ressourcen und IAM-/RBAC-Berechtigungen MÜSSEN serverseitig kontrolliert werden.
 - **Generator ↔ OASIS-Quellen**: Header- und Spezifikationsversionen MÜSSEN reproduzierbar gepinnt sein.
@@ -408,7 +410,7 @@ Der Generator MUSS eine gepflegte Mapping-Datei verarbeiten, die Parameter-Richt
 
 #### RPC-FA-GEN-003 – Reproduzierbarkeit
 
-Generierte Artefakte MÜSSEN reproduzierbar sein. Gleiche Eingaben MÜSSEN byte-identische IDL- und Stub-Artefakte erzeugen.
+Generierte Artefakte MÜSSEN reproduzierbar sein. Gleiche Eingaben MÜSSEN byte-identische IDL-, Stub- und Runtime-Source-Artefakte erzeugen.
 
 #### RPC-FA-GEN-004 – Versionierte Profile
 
@@ -421,6 +423,20 @@ Der Generator MUSS Golden-File-Tests für IDL, Konstanten und ausgewählte Servi
 #### RPC-FA-GEN-006 – Mapping-Validierung
 
 Der Generator MUSS Mapping-Dateien gegen die gepinnten OASIS-Quellen validieren. Unbekannte Funktionen, nicht mehr passende Struct-Felder, widersprüchliche Parameter-Richtungen, unreferenzierte Sonderregeln und nicht deklarierte manuelle Overrides MÜSSEN den Generatorlauf abbrechen.
+
+#### RPC-FA-GEN-007 – Runtime-Source-Ausgabe
+
+Der Generator MUSS Runtime-Code als Source-Artefakt je unterstützter Zielsprache ausgeben können. Runtime-Source-Artefakte umfassen sprachspezifische Hilfen für Client- und Servernutzung, Transportauswahl, Fehler-/Returncode-Behandlung, Konfiguration und Test-Harnesses, soweit diese nicht rein fachliche PKCS#11-Semantik verändern.
+
+Runtime-Source-Artefakte MÜSSEN als lesbarer Quellcode ausgegeben werden und DÜRFEN NICHT ausschließlich als Binärpaket, Container-Image oder extern aufzulösende Abhängigkeit bereitgestellt werden. Sie MÜSSEN dieselben Lizenz-, Provenienz- und Reproduzierbarkeitsregeln erfüllen wie generierte IDL- und Stub-Artefakte.
+
+#### RPC-FA-GEN-008 – Hexagonale Runtime-Option
+
+Das Generator-Tool SOLL Runtime-Source optional in einer hexagonalen Adapter-Struktur ausgeben können. Diese Option MUSS mindestens getrennte Ports für fachliche PKCS#11-Operationen, Transportadapter für gRPC und TCP-RPC, Konfigurationsadapter, Observability-/Audit-Adapter und Backend-Adapter vorsehen. Die hexagonale Struktur DARF NICHT Voraussetzung für die Nutzung der generierten IDL, Client-Stubs oder Server-Stubs sein.
+
+#### RPC-FA-GEN-009 – Artefaktauswahl
+
+Das Generator-Tool MUSS explizit auswählen lassen, welche Artefaktklassen erzeugt werden: mindestens `idl`, `client-stubs`, `server-stubs`, `runtime-source`, `hexagonal-runtime-source`, `examples` und `all`. Die Auswahl von `runtime-source` oder `hexagonal-runtime-source` DARF die fachliche IDL und das Mapping nicht verändern.
 
 ### 6.3 PKCS#11-Kernsemantik
 
@@ -550,6 +566,41 @@ Jedes Backend-Profil MUSS einen Status gemäß `RPC-LESE-007` tragen. Der Status
 
 Die Protobuf-IDL MUSS versionierte Pakete verwenden, z. B. `cryptorpc.pkcs11.v1` und `cryptorpc.kms.v1`. Breaking Changes MÜSSEN über neue Major-Versionen der jeweiligen IDL erfolgen.
 
+### RPC-API-TRANSPORT-001 – Transportprofile
+
+Der RPC-Server MUSS mindestens zwei Transportprofile unterstützen: gRPC und TCP-RPC. Beide Transportprofile MÜSSEN dieselbe fachliche PKCS#11-RPC-Semantik, dieselben `CK_RV`-Response-Regeln, dieselben Authentisierungs-/Autorisierungsentscheidungen und dieselben Auditpflichten verwenden.
+
+### RPC-API-TRANSPORT-002 – TCP-RPC-Framing
+
+TCP-RPC MUSS als eigenständiges, längenbegrenztes und versioniertes Framing über TCP spezifiziert werden. Das Framing MUSS Request-ID, Method-Identifier, Payload-Länge, Protokollversion und Fehlerklasse transportieren können und MUSS maximale Frame- und Message-Größen erzwingen.
+
+### RPC-API-TRANSPORT-003 – Optionale TLS/mTLS-Terminierung
+
+IDL, Mapping, Client-Stubs und Server-Stubs MÜSSEN unabhängig von TLS/mTLS generierbar sein. TLS 1.3 und mTLS KÖNNEN für gRPC und TCP-RPC als Laufzeitoption aktiviert werden. Wenn TLS/mTLS aktiviert ist, MUSS der Server die geprüfte Client-Identität transportneutral in einen internen Principal abbilden, damit Autorisierung, Session-Besitz und Audit nicht vom konkreten Transportprofil abhängen.
+
+### RPC-API-TRANSPORT-004 – Tool- und Profilschalter
+
+Generator- und Server-Tools MÜSSEN Transportprofile und Transport-Security über explizite Schalter oder Profilwerte auswählbar machen. Mindestens erforderlich sind Transportauswahl (`grpc`, `tcp-rpc`) und Security-Modus (`none`, `tls`, `mtls`, `external`). Eine Änderung des Security-Modus DARF die generierte fachliche Protobuf-IDL, Mapping-Auswertung, Client-Stubs oder Server-Stubs nicht verändern; sie DARF nur Konfiguration, Bootstrap-Code, Beispiele oder Runbooks beeinflussen.
+
+### RPC-API-TRANSPORT-005 – Identitätsquelle und External-Termination
+
+Wenn ein Profil Client-Identitäten verwendet, MUSS die Identitätsquelle explizit konfiguriert werden; Auto-Detection ist ausgeschlossen. Zulässige initiale Werte sind `mtls-subject`, `header` und `none`.
+
+Für `security=mtls` MUSS `identity.source=mtls-subject` oder eine dokumentierte äquivalente Zertifikatsableitung verwendet werden. Für `security=external`, etwa bei L7-Service-Mesh- oder Reverse-Proxy-Terminierung, MUSS `identity.source=header` eine nicht leere Peer-Allowlist besitzen, bevor Header-Werte als Client-Identität akzeptiert werden. Ohne Peer-Allowlist MUSS der Serverstart fehlschlagen.
+
+### RPC-API-TRANSPORT-006 – Betriebsmodi für Terminierung
+
+Das Projekt MUSS mindestens folgende Transport-Security-Betriebsmodi dokumentieren:
+
+| Modus | Beispiel | TLS/mTLS-Terminierung | Identitätsquelle |
+| ----- | -------- | --------------------- | ---------------- |
+| Direkt ohne TLS | lokaler Test, Entwicklungsprofil | keine | `none` oder profilabhängiger Auth-Mechanismus |
+| Direkt mit TLS | Bare-Container oder Kubernetes ohne Mesh | Server | `none` oder profilabhängiger Auth-Mechanismus |
+| Direkt mit mTLS | Bare-Container, Kubernetes ohne Mesh oder L4-Passthrough-Mesh | Server | `mtls-subject` |
+| External Termination | L7-Service-Mesh, Sidecar oder Reverse Proxy | externer Proxy | `header` plus Peer-Allowlist |
+
+Neue Mesh- oder Proxy-Varianten SOLLEN einem dieser Modi zugeordnet werden, solange sie keine neue Vertrauensannahme einführen.
+
 ### RPC-API-GO-001 – Go-Stubs
 
 Das Projekt MUSS Go-Client- und Go-Server-Stubs generieren und im CI sowohl einen Go-Client-Build als auch den Go-Referenzserver gegen die generierten Service-Interfaces prüfen.
@@ -568,7 +619,7 @@ Das Projekt MUSS C#/.NET-Client- und Server-Stubs generieren und im CI sowohl ei
 
 ### RPC-API-CFG-001 – Server-Konfiguration
 
-Der Server MUSS mindestens Modulpfad, Token-/Slot-Auswahl, Secret- und Credential-Quellen, TLS-Konfiguration, Session-Limits und Logging/Audit-Ziel konfigurierbar machen.
+Der Server MUSS mindestens Modulpfad, Token-/Slot-Auswahl, Secret- und Credential-Quellen, optionale Transport-Security-Konfiguration, Session-Limits und Logging/Audit-Ziel konfigurierbar machen.
 
 ### RPC-API-CFG-002 – Backend-Profile
 
@@ -614,11 +665,11 @@ Der Server MUSS laufende Sessions bei Shutdown ablehnen, schließen oder sauber 
 
 #### RPC-NFA-SEC-001 – Transportverschlüsselung
 
-Produktive Verbindungen MÜSSEN TLS 1.3 unterstützen und MÜSSEN unverschlüsselten Betrieb ablehnen. Unverschlüsselter Betrieb DARF ausschließlich in dokumentierten Entwicklungsprofilen und nur nach expliziter Opt-in-Konfiguration aktiviert werden; der Server MUSS beim Start eine Warnung in das Audit-Log schreiben, sobald TLS deaktiviert ist.
+Transportverschlüsselung MUSS profilabhängig konfigurierbar sein. TLS/mTLS DARF NICHT Voraussetzung für Codegenerierung, Stub-Nutzung oder Mapping-Validierung sein. Profile ohne TLS/mTLS MÜSSEN dies explizit deklarieren; der Server MUSS beim Start sichtbar protokollieren, wenn ein Transportprofil ohne TLS betrieben wird.
 
 #### RPC-NFA-SEC-002 – Client-Authentisierung
 
-Der Server MUSS mindestens ein starkes Client-Authentisierungsverfahren unterstützen. mTLS SOLLTE als Standardverfahren für produktive Profile bereitstehen; äquivalente Verfahren MÜSSEN dokumentieren, wie Client-Identitäten authentisiert und auf serverseitige Principals abgebildet werden.
+Client-Authentisierung MUSS profilabhängig konfigurierbar sein. mTLS KANN als Verfahren für gRPC- und TCP-RPC-Profile verwendet werden. Wenn ein Profil Client-Authentisierung aktiviert, MUSS es dokumentieren, wie Client-Identitäten authentisiert und auf serverseitige Principals abgebildet werden.
 
 #### RPC-NFA-SEC-003 – PIN-Handling
 
@@ -639,6 +690,10 @@ Der Server MUSS PINs, HSM-Credentials, Klartextdaten und rohe Signatur-Inputs nu
 #### RPC-NFA-SEC-007 – Missbrauchs- und Lastbegrenzung
 
 Der Server MUSS konfigurierbare Limits für gleichzeitige Sessions, offene Multi-Part-Operationen, Request-Größen, Queue-Längen und Operationsrate pro Client-Identität bereitstellen. Überschrittene Limits MÜSSEN als unterscheidbare Server-Policy- oder Ressourcenfehler auditierbar sein und DÜRFEN nicht als PKCS#11-Backendfehler getarnt werden.
+
+#### RPC-NFA-SEC-008 – Header-Identität nur mit Peer-Allowlist
+
+Profile mit `identity.source=header` MÜSSEN eine nicht leere Allowlist vertrauenswürdiger Peers oder Proxy-Identitäten konfigurieren. Der Server MUSS Anfragen von nicht erlaubten Peers ablehnen, bevor Header-Identitäten ausgewertet werden. Header-Identität DARF NICHT als Fallback für fehlende mTLS-Identität verwendet werden.
 
 ### 8.4 Observability und Betrieb
 
@@ -706,6 +761,10 @@ Der Generator MUSS ein kanonisches internes Modell aus Headern und Mapping-Regel
 
 PKCS#11-, Cloud-KMS-, Netzwerk-HSM- und Cloud-HSM-spezifische Pakete MÜSSEN so getrennt sein, dass eine Domäne keine fachliche Semantik einer anderen Domäne importieren muss. Gemeinsame Pakete DÜRFEN nur domänenneutrale Infrastruktur wie Transport, Authentisierung, Konfiguration, Logging, Metriken und Build-Hilfen enthalten.
 
+### RPC-ARCH-004 – Optionale hexagonale Runtime-Struktur
+
+Wenn das Generator-Tool hexagonale Runtime-Source erzeugt, MUSS diese Runtime zwischen Domain-Port, Driving-Adaptern und Driven-Adaptern unterscheiden. Transportprofile wie gRPC und TCP-RPC MÜSSEN als Driving-Adapter modelliert werden. PKCS#11-, Netzwerk-HSM-, Cloud-HSM- oder Cloud-KMS-Anbindungen MÜSSEN als Driven-Adapter modelliert werden. Der fachliche Kern DARF keine Transport-, TLS-, mTLS-, Protobuf-Runtime- oder Vendor-SDK-Abhängigkeit benötigen.
+
 ### RPC-PRINC-001 – Explizite Semantik
 
 Jede Abweichung von der C-ABI MUSS explizit im Mapping dokumentiert sein.
@@ -722,9 +781,9 @@ Der RPC-Server DARF keine kryptografische Operation durch Host-Software ersetzen
 
 Der MVP-Generator und der MVP-Referenzserver MÜSSEN in Go implementiert werden. Diese Vorgabe beschränkt nicht die Generierung von Server-Stubs für Java, Kotlin und C#.
 
-### RPC-TECH-002 – Protobuf und gRPC
+### RPC-TECH-002 – Protobuf, gRPC und TCP-RPC
 
-Protobuf v3 und gRPC MÜSSEN als primäre IDL- und Transporttechnologie verwendet werden.
+Protobuf v3 MUSS als primäre IDL-Technologie verwendet werden. gRPC MUSS als Standardtransportprofil unterstützt werden. TCP-RPC MUSS als zusätzliches Transportprofil unterstützt werden und DARF keine abweichende fachliche PKCS#11-Semantik einführen.
 
 ### RPC-TECH-003 – PKCS#11-Backend
 
@@ -950,7 +1009,7 @@ Ein Abnahme-Artefakt MUSS alle MVP-blockierenden Anforderungen auf mindestens ei
 
 ### RPC-ACCEPT-009 – Secure-Defaults-Abnahme
 
-Ein automatisierter oder reproduzierbarer Starttest MUSS zeigen, dass ein produktives Profil ohne TLS, ohne starke Client-Authentisierung, mit rohen PINs im RPC oder mit fehlender Secret-Quelle nicht startet. Entwicklungsprofile MÜSSEN diese Abweichungen explizit aktivieren.
+Ein automatisierter oder reproduzierbarer Starttest MUSS zeigen, dass Profile ihre Transport-Security-Einstellung eindeutig deklarieren. Ein Profil mit aktivierter TLS/mTLS- oder Client-Authentisierungsoption MUSS bei fehlender oder widersprüchlicher Konfiguration fehlschlagen. Profile ohne TLS/mTLS MÜSSEN explizit als solche konfiguriert sein und beim Start sichtbar protokolliert werden. Fehlende Secret-Quellen oder rohe PINs in produktiven Profilen MÜSSEN weiterhin zum Startabbruch führen.
 
 ---
 
@@ -991,9 +1050,11 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | Cloud-HSM | Cloud-Dienst, der HSM-Cluster bereitstellt und häufig PKCS#11-Client-Libraries anbietet. |
 | Cloud-KMS | Cloud-Dienst mit ressourcenorientierter Key-Management- und Kryptografie-API, meist ohne PKCS#11-Sessions und Handles. |
 | Credential-Referenz | Nicht geheimer Verweis auf ein serverseitig konfiguriertes oder extern auflösbares Secret. |
-| gRPC | RPC-Framework auf Basis von HTTP/2 und Protobuf, im Projekt primärer Transport. |
+| gRPC | RPC-Framework auf Basis von HTTP/2 und Protobuf; eines der unterstützten Transportprofile. |
+| Header-Identität | Client-Identität, die von einem vertrauenswürdigen Proxy oder Mesh über ein konfiguriertes Header-Feld weitergegeben wird. |
 | IAM/RBAC | Identity & Access Management bzw. Role-Based Access Control; Berechtigungsmodelle in Cloud- und Plattformsystemen. |
 | IDL | Interface Definition Language, hier Protobuf. |
+| Identitätsquelle | Konfigurierter Ursprung der Client-Identität, z. B. mTLS-Zertifikat, Proxy-Header oder keine transportseitige Identität. |
 | KEM | Key Encapsulation Mechanism; für spätere PQC-Erweiterungen relevant. |
 | Lease | Zeitlich begrenzte serverseitige Reservierung einer Ressource (z. B. einer Session) mit Idle-Timeout. |
 | Mapping-Datei | Manuell gepflegte Semantik-Ergänzung zu den OASIS-Headern. |
@@ -1001,12 +1062,14 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | Netzwerk-HSM | HSM, das über ein Netzwerk und meist über eine Vendor-Client-Library angesprochen wird. |
 | OCI | Open Container Initiative; Standard für Container-Images und Runtimes. |
 | Opaque Handle | Numerischer Wert, dessen Bedeutung nur der Server kennt. |
+| Peer-Allowlist | Liste vertrauenswürdiger Peer-Adressen oder Proxy-/Mesh-Identitäten, die Header-Identitäten setzen dürfen. |
 | PKCS#11 | Standardisierte API für kryptografische Tokens und HSMs. |
 | Produktionsfähig deklariert | Profilstatus mit dokumentierter Betriebsgrenze, Security-Konfiguration und bestandener domänenspezifischer Abnahme. |
 | SBOM | Software Bill of Materials; maschinenlesbare Liste eingesetzter Abhängigkeiten und Lizenzen. |
 | Secret-Quelle | Externes System oder lokale Konfiguration, aus der PINs, Tokens, Zertifikate oder Provider-Credentials geladen werden. |
 | Semantisch 1:1 | Gleiche fachliche Operation und Fehlersemantik, aber transportgerechte Datentypen statt C-Pointer. |
 | Signing Oracle | Missbrauchsmuster, bei dem ein Dienst wiederholt Signaturen für vom Angreifer gewählte Daten erzeugt. |
+| TCP-RPC | Eigenes, framing-basiertes RPC-Transportprofil über TCP mit optionalem TLS/mTLS und derselben fachlichen Semantik wie das gRPC-Profil. |
 
 ---
 
