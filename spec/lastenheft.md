@@ -368,7 +368,7 @@ Akzeptanz: Ein Dokument oder maschinenlesbares Artefakt im Repository ordnet jed
 
 Der MVP MUSS mindestens gRPC als lauffähiges Transportprofil für die funktionale und betriebliche Abnahme bereitstellen. TCP-RPC ist als Post-MVP-Produktziel gemäß `RPC-API-TRANSPORT-001` vorgesehen und blockiert die MVP-Abnahme nicht, solange TCP-RPC nicht ausdrücklich in den MVP-Release-Scope aufgenommen wird.
 
-Akzeptanz: `RPC-ACCEPT-001` und `RPC-ACCEPT-005` laufen mindestens über gRPC. Wird TCP-RPC ausdrücklich in den MVP-Release-Scope aufgenommen, MÜSSEN zusätzlich `RPC-API-TRANSPORT-002`, `RPC-API-TRANSPORT-003` und die TCP-RPC-Cancellation-Anforderung aus `RPC-FA-RPC-003` für die MVP-Abnahme belegt werden.
+Akzeptanz: `RPC-ACCEPT-001` und `RPC-ACCEPT-005` laufen mindestens über gRPC. Wird TCP-RPC ausdrücklich in den MVP-Release-Scope aufgenommen, MÜSSEN zusätzlich `RPC-API-TRANSPORT-002`, `RPC-API-TRANSPORT-003` und die TCP-RPC-Cancellation-Anforderung aus `RPC-FA-RPC-003` für die MVP-Abnahme belegt werden. Außerdem MUSS ein Transport-Paritätstest identische fachliche Testfälle über gRPC und TCP-RPC ausführen und dieselbe fachliche Response einschließlich `CK_RV`, Authentisierungs-/Autorisierungsentscheidung und Audit-Korrelation nachweisen; dieser Test MUSS mindestens einen erfolgreichen Funktionsaufruf, einen PKCS#11-Fehlerfall, einen Authentisierungs- oder Autorisierungsfehler und ein Deadline-/Cancel-/Timeout-Szenario enthalten.
 
 ---
 
@@ -675,7 +675,12 @@ Das Projekt MUSS Java-Client- und Java-Server-Stubs generieren und im CI sowohl 
 
 ### RPC-API-KOTLIN-001 – Kotlin-Stubs
 
-Das Projekt MUSS für Kotlin mindestens einen eindeutig deklarierten und erfüllbaren Stub-Pfad bereitstellen: entweder generierte Kotlin-Client- und Kotlin-Server-Stubs oder Java-Stubs, die Kotlin-kompatibel sind. Für jeden als unterstützt deklarierten Kotlin-Pfad MUSS der CI-Nachweis sowohl einen Kotlin-Client-Build als auch entweder einen Kotlin-Stub-Harness oder einen Mock-Server-Kontrakttest ohne manuelle Anpassung der generierten Artefakte ausführen.
+Das Projekt MUSS für Kotlin mindestens einen eindeutig deklarierten und erfüllbaren Stub-Pfad bereitstellen. Zulässige Varianten sind:
+
+- **Native Kotlin-Artefakte**: Der Generator erzeugt Kotlin-Client- und Kotlin-Server-Stubs sowie Kotlin-Runtime-Source. Der CI-Nachweis MUSS sowohl einen Kotlin-Client-Build als auch entweder einen Kotlin-Stub-Harness oder einen Kotlin-Mock-Server-Kontrakttest gegen diese generierten Kotlin-Artefakte ohne manuelle Anpassung ausführen.
+- **Kotlin-kompatible Java-Artefakte**: Der Generator erzeugt Java-Artefakte und deklariert sie als Kotlin-kompatibel. Der CI-Nachweis MUSS mindestens einen Kotlin-Client kompilieren, der die generierten Java-Client-Stubs direkt verwendet, sowie entweder einen Kotlin-Stub-Harness oder einen Kotlin-Mock-Server-Kontrakttest gegen die generierten Java-Server-Artefakte ausführen. Auch hier DÜRFEN die generierten Artefakte nicht manuell angepasst werden.
+
+Ein Build, der nur Java kompiliert, erfüllt den Kotlin-Zielpfad nicht.
 
 ### RPC-API-CSHARP-001 – C#-Stubs
 
@@ -1060,6 +1065,8 @@ Ein automatisierter Test MUSS über das MVP-Transportprofil aus `RPC-MVP-008` ge
 
 Ein CI-Job MUSS IDL, Client-Stubs, Server-Stubs und Runtime-Source-Artefakte aus gepinnten Quellen generieren und gegen Golden Files prüfen. Der Job MUSS fehlschlagen, wenn das Quellenmanifest, die Mapping-Datei oder ein generiertes Artefakt nicht zum eingecheckten Referenzstand passt.
 
+Zusätzlich MUSS der Generator-Abnahmejob negative Validierungstests enthalten: mindestens eine ungültige Mapping-Datei gemäß `RPC-FA-GEN-006`, ein ungültiges RPC Surface Profile gemäß `RPC-FA-GEN-007` und eine fehlende oder widersprüchliche Limit-Deklaration gemäß `RPC-FA-IDL-006` MÜSSEN den Generatorlauf deterministisch abbrechen. Der Job MUSS außerdem prüfen, dass der für das MVP Surface Profile gewählte Limit-Mechanismus in der generierten IDL oder im referenzierten Limit-Artefakt sichtbar ist.
+
 ### RPC-ACCEPT-003 – Sprach-Abnahme
 
 Go-, Java-, C#- und Kotlin-Zielpfad-Artefakte MÜSSEN mindestens einen Client-Smoke-Test gegen den Go-Referenzserver nachweisen. Zusätzlich MUSS Go nachweisen, dass der Referenzserver gegen die generierten Server-Stubs und Runtime-Source-Artefakte baut; Java, C# und der Kotlin-Zielpfad MÜSSEN einen kompilierbaren Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Stubs und Runtime-Source-Artefakte nachweisen.
@@ -1071,6 +1078,8 @@ Ein Review MUSS bestätigen, dass PINs, HSM-Credentials, private Schlüsselwerte
 ### RPC-ACCEPT-005 – Betriebsabnahme
 
 Ein lokaler Runbook-Test MUSS den Server gegen SoftHSM starten, Readiness prüfen und eine Demo-Operation über das MVP-Transportprofil aus `RPC-MVP-008` ausführen.
+
+Zusätzlich MUSS ein automatisierter oder reproduzierbarer Limit-Test nachweisen, dass der MVP-Referenzserver die für das aktive RPC Surface Profile dokumentierten Request-, Response-, Session- und Multi-Part-Limits aus `RPC-FA-IDL-006` und `RPC-MENGE-005` durchsetzt. Überschreitungen MÜSSEN deterministisch mit unterscheidbarem Server-Policy- oder Ressourcenfehler beantwortet werden und DÜRFEN nicht als PKCS#11-Backendfehler getarnt werden.
 
 ### RPC-ACCEPT-006 – Netzwerk-/Cloud-HSM-Profilabnahme
 
@@ -1134,7 +1143,7 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | IAM/RBAC | Identity & Access Management bzw. Role-Based Access Control; Berechtigungsmodelle in Cloud- und Plattformsystemen. |
 | IDL | Interface Definition Language, hier Protobuf. |
 | Identitätsquelle | Konfigurierter Ursprung der Client-Identität, z. B. mTLS-Zertifikat, Proxy-Header oder keine transportseitige Identität. |
-| Kotlin-Zielpfad | Der für Kotlin deklarierte Artefaktpfad: entweder native Kotlin-Client-/Server-Stubs und Runtime-Source oder explizit deklarierte Kotlin-kompatible Java-Artefakte mit Kotlin-Build- und Harness-Nachweis gemäß `RPC-API-KOTLIN-001`. |
+| Kotlin-Zielpfad | Der für Kotlin deklarierte Artefaktpfad: entweder native Kotlin-Client-/Server-Stubs und Runtime-Source oder explizit deklarierte Kotlin-kompatible Java-Artefakte mit Kotlin-Build- und Integrationsnachweis gemäß `RPC-API-KOTLIN-001`. |
 | Lease | Zeitlich begrenzte serverseitige Reservierung einer Ressource (z. B. einer Session) mit Idle-Timeout. |
 | Mapping-Datei | Manuell gepflegte Semantik-Ergänzung zu den OASIS-Headern. |
 | mTLS | Mutual TLS – beidseitige Authentisierung über X.509-Zertifikate. |
