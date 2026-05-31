@@ -7,8 +7,8 @@ cryptographic backends. It models four equally-ranked domains —
 PKCS#11, Cloud-KMS, Network-HSM, and Cloud-HSM — and exposes them
 through stable, language-neutral Protobuf/gRPC contracts. The MVP
 covers a semantically 1:1 PKCS#11 surface generated from the official
-OASIS headers, with reference Go server and generated Go/Java/Kotlin/C#
-client stubs.
+OASIS headers, with a Go reference server and generated
+Go/Java/Kotlin/C# client and server stubs.
 
 ## Who is it for?
 
@@ -87,9 +87,15 @@ patterns), not functional.
 
 As of **2026-05-31**:
 
-- **Lastenheft v0.1 (Entwurf)** — committed, 5 refinement passes
-  applied, code-review of ADR-0001 ran and surfaced 5 findings
-  (handled separately).
+- **Lastenheft v0.2 (`Entwurf, fachlich verfeinert`)** — committed;
+  stubs widened to client + server across all four languages
+  ([`RPC-MVP-003`](spec/lastenheft.md),
+  [`RPC-NONGOAL-007`](spec/lastenheft.md)), release-scope/profile-
+  status vocabulary added ([`RPC-LESE-007`](spec/lastenheft.md),
+  [`RPC-PUE-004`](spec/lastenheft.md),
+  [`RPC-FA-BACKEND-005`](spec/lastenheft.md)), ~20 new normative items
+  across IDL/generator/security/audit/ops/acceptance. Code-review of
+  ADR-0001 ran and surfaced 5 findings (handled separately).
 - **Documentation/planning harness** — bootstrapped: ADR-0001
   `Accepted`, planning lifecycle directories with README stubs,
   M1–M4 roadmap sketched.
@@ -107,7 +113,7 @@ land with M1.
 
 | Subsystem | State | References |
 | --- | --- | --- |
-| Requirements (Lastenheft) | `Draft v0.1` | [`spec/lastenheft.md`](spec/lastenheft.md) — `RPC-*` IDs |
+| Requirements (Lastenheft) | `Draft v0.2` | [`spec/lastenheft.md`](spec/lastenheft.md) — `RPC-*` IDs |
 | Technical specification | `Stub` | [`spec/spezifikation.md`](spec/spezifikation.md) — chapter mapping to `RPC-*` |
 | Architecture overview | `Stub` | [`spec/architecture.md`](spec/architecture.md) — section mapping to `RPC-*` |
 | Documentation/planning harness | `Accepted` | [`ADR 0001`](docs/plan/adr/0001-documentation-and-planning-structure.md) — directory layout, ADR lifecycle, four-domain pflege rule (§2.7) |
@@ -115,7 +121,7 @@ land with M1.
 | Build/container harness | `Open` | [`open/001-build-container-harness.md`](docs/plan/planning/open/001-build-container-harness.md) — analysis of sibling-project patterns, three options, activation triggers |
 | Generator + IDL | `Pending` | `RPC-FA-GEN-*`, `RPC-FA-IDL-*`; activates with M1 |
 | Reference server (Go) | `Pending` | `RPC-MVP-002`, `RPC-TECH-003`; activates with M1 |
-| Language stubs (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; activates with M1 |
+| Language stubs (Go/Java/Kotlin/C#, client + server) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; activates with M1 |
 
 ## MVP Scope
 
@@ -127,8 +133,11 @@ chapter 4:
   ([`RPC-MVP-001`](spec/lastenheft.md))
 - ship a Go reference server running the core API against SoftHSM v2
   ([`RPC-MVP-002`](spec/lastenheft.md))
-- emit compilable Go, Java, Kotlin, and C# client stubs
-  ([`RPC-MVP-003`](spec/lastenheft.md))
+- emit compilable Go, Java, Kotlin, and C# client and server stubs
+  ([`RPC-MVP-003`](spec/lastenheft.md)); Go binds its reference server
+  against the generated server stubs, Java/Kotlin/C# only need a stub
+  harness or mock-server contract test
+  ([`RPC-NONGOAL-007`](spec/lastenheft.md))
 - preserve PKCS#11 return codes (`CK_RV`) in every business response
   ([`RPC-MVP-004`](spec/lastenheft.md))
 - maintain server-side session and handle state across multiple RPC

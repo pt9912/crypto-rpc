@@ -17,7 +17,7 @@ Liefert die MVP-Anforderungen aus `RPC-MVP-001…007` gegen SoftHSM v2
 - Generator für Kern-API aus OASIS-Headern (`RPC-MVP-001`, `RPC-FA-GEN-*`)
 - Protobuf-IDL `cryptorpc.pkcs11.v1` (`RPC-FA-IDL-*`, `RPC-API-PROTO-001`)
 - Go-Referenzserver mit `miekg/pkcs11` (`RPC-MVP-002`, `RPC-TECH-003`)
-- Go-/Java-/Kotlin-/C#-Stubs (`RPC-MVP-003`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`)
+- Go-/Java-/Kotlin-/C#-Client- und Server-Stubs (`RPC-MVP-003`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`); Go-Referenzserver baut gegen die generierten Go-Server-Stubs, Java/Kotlin/C# weisen Stub-Harness oder Mock-Server-Kontrakttest nach (`RPC-NONGOAL-007`)
 - `CK_RV`-Treue (`RPC-MVP-004`, `RPC-FA-P11-003`)
 - Session-/Handle-State über RPC-Calls (`RPC-MVP-005`, `RPC-FA-SESSION-*`)
 - Kompatibilitätsmatrix (`RPC-MVP-006`, `docs/compatibility.md`)

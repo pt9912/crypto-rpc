@@ -8,7 +8,7 @@ PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM — und stellt sie über
 stabile, sprachneutrale Protobuf/gRPC-Kontrakte bereit. Der MVP bildet
 die PKCS#11-Schnittstelle semantisch 1:1 ab, generiert aus den
 offiziellen OASIS-Headern, mit einem Go-Referenzserver und generierten
-Go-/Java-/Kotlin-/C#-Client-Stubs.
+Go-/Java-/Kotlin-/C#-Client- und Server-Stubs.
 
 ## Für wen?
 
@@ -90,9 +90,15 @@ Build-Pattern), nicht funktional.
 
 Stand **2026-05-31**:
 
-- **Lastenheft v0.1 (Entwurf)** — committet, 5 Verfeinerungs-
-  Durchgänge angewandt, Code-Review von ADR-0001 hat 5 Findings
-  produziert (separat zu adressieren).
+- **Lastenheft v0.2 (`Entwurf, fachlich verfeinert`)** — committet;
+  Stubs auf Client + Server über alle vier Sprachen erweitert
+  ([`RPC-MVP-003`](spec/lastenheft.md),
+  [`RPC-NONGOAL-007`](spec/lastenheft.md)), Release-Scope/Profilstatus-
+  Vokabular ergänzt ([`RPC-LESE-007`](spec/lastenheft.md),
+  [`RPC-PUE-004`](spec/lastenheft.md),
+  [`RPC-FA-BACKEND-005`](spec/lastenheft.md)), ~20 neue normative Punkte
+  quer durch IDL/Generator/Security/Audit/Ops/Abnahme. Code-Review von
+  ADR-0001 hat 5 Findings produziert (separat zu adressieren).
 - **Dokumentations-/Planungs-Harness** — bootstrappt: ADR-0001
   `Accepted`, Planning-Lifecycle-Verzeichnisse mit README-Stubs,
   M1–M4-Roadmap skizziert.
@@ -110,7 +116,7 @@ CI-Workflow; alle drei kommen mit M1.
 
 | Subsystem | Stand | Belege |
 | --- | --- | --- |
-| Anforderungen (Lastenheft) | `Entwurf v0.1` | [`spec/lastenheft.md`](spec/lastenheft.md) — `RPC-*`-Kennungen |
+| Anforderungen (Lastenheft) | `Entwurf v0.2` | [`spec/lastenheft.md`](spec/lastenheft.md) — `RPC-*`-Kennungen |
 | Technische Spezifikation | `Stub` | [`spec/spezifikation.md`](spec/spezifikation.md) — Kapitel-Mapping auf `RPC-*` |
 | Architektur-Überblick | `Stub` | [`spec/architecture.md`](spec/architecture.md) — Abschnitt-Mapping auf `RPC-*` |
 | Dokumentations-/Planungs-Harness | `Accepted` | [`ADR 0001`](docs/plan/adr/0001-documentation-and-planning-structure.md) — Verzeichnisstruktur, ADR-Lifecycle, Vier-Domänen-Pflege-Regel (§2.7) |
@@ -118,7 +124,7 @@ CI-Workflow; alle drei kommen mit M1.
 | Build-/Container-Harness | `Open` | [`open/001-build-container-harness.md`](docs/plan/planning/open/001-build-container-harness.md) — Analyse der Schwesterprojekt-Pattern, drei Optionen, Aktivierungstrigger |
 | Generator + IDL | `Pending` | `RPC-FA-GEN-*`, `RPC-FA-IDL-*`; aktiviert mit M1 |
 | Referenzserver (Go) | `Pending` | `RPC-MVP-002`, `RPC-TECH-003`; aktiviert mit M1 |
-| Sprach-Stubs (Go/Java/Kotlin/C#) | `Pending` | `RPC-MVP-003`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; aktiviert mit M1 |
+| Sprach-Stubs (Go/Java/Kotlin/C#, Client + Server) | `Pending` | `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`; aktiviert mit M1 |
 
 ## MVP-Scope
 
@@ -130,8 +136,11 @@ Kapitel 4:
   ([`RPC-MVP-001`](spec/lastenheft.md))
 - einen Go-Referenzserver liefern, der die Kern-API gegen SoftHSM v2
   ausführt ([`RPC-MVP-002`](spec/lastenheft.md))
-- kompilierbare Go-, Java-, Kotlin- und C#-Client-Stubs emittieren
-  ([`RPC-MVP-003`](spec/lastenheft.md))
+- kompilierbare Go-, Java-, Kotlin- und C#-Client- **und** Server-Stubs
+  emittieren ([`RPC-MVP-003`](spec/lastenheft.md)); Go bindet den
+  Referenzserver gegen die generierten Server-Stubs, Java/Kotlin/C#
+  brauchen nur einen Stub-Harness oder Mock-Server-Kontrakttest
+  ([`RPC-NONGOAL-007`](spec/lastenheft.md))
 - PKCS#11-Returncodes (`CK_RV`) in jeder fachlichen Response erhalten
   ([`RPC-MVP-004`](spec/lastenheft.md))
 - serverseitig Session- und Handle-Zustand über mehrere RPC-Calls

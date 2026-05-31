@@ -2,7 +2,7 @@
 
 **Status:** Open (Trigger-Watch)
 **Datum:** 2026-05-31
-**Bezug:** [Lastenheft](../../../../spec/lastenheft.md) — `RPC-ENV-001`, `RPC-ENV-002`, `RPC-TECH-001`, `RPC-TECH-002`, `RPC-TECH-003`, `RPC-MVP-002`, `RPC-MVP-003`, `RPC-NFA-SEC-005`, `RPC-NFA-MAINT-001`
+**Bezug:** [Lastenheft](../../../../spec/lastenheft.md) — `RPC-ENV-001`, `RPC-ENV-002`, `RPC-TECH-001`, `RPC-TECH-002`, `RPC-TECH-003`, `RPC-TECH-007`, `RPC-MVP-002`, `RPC-MVP-003`, `RPC-NONGOAL-007`, `RPC-NFA-SEC-005`, `RPC-NFA-MAINT-001`
 **Schwesterprojekte:** `c-hsm-doc`, `grid-gym`, `grid-guide`
 **Domäne:** PKCS#11 (M1-MVP); spätere Erweiterung auf Netzwerk-HSM/Cloud-HSM/Cloud-KMS
 
@@ -65,8 +65,14 @@ verwenden dieselbe Build-Architektur:
 
 ## crypto-rpc-spezifische Erweiterungen (nicht in Schwesterprojekten)
 
-1. **Multi-Sprache-Stubs** (`RPC-MVP-003`, `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`):
-   Go-, Java-, Kotlin- und C#-Stubs müssen im CI kompilieren. Optionen:
+1. **Multi-Sprache-Client- und Server-Stubs** (`RPC-MVP-003`,
+   `RPC-API-GO/JAVA/KOTLIN/CSHARP-001`, `RPC-NONGOAL-007`,
+   `RPC-ACCEPT-003`): Go-, Java-, Kotlin- und C#-Client- und
+   Server-Stubs müssen im CI kompilieren. Für Go MUSS der
+   Referenzserver gegen die generierten Server-Stubs bauen; für Java,
+   Kotlin und C# reicht ein Stub-Harness oder Mock-Server-Kontrakttest
+   (`RPC-NONGOAL-007` schliesst vollständige Referenzserver pro Sprache
+   im MVP aus). Optionen:
    - vier `--target stub-<lang>`-Stages mit je eigener Toolchain, oder
    - ein generischer Build-Container je Sprache, aufgerufen über
      ein eigenes `stubs-<lang>`-Target.
@@ -89,7 +95,7 @@ verwenden dieselbe Build-Architektur:
 | --- | --- | --- |
 | **A** | Nur `Makefile` + `Dockerfile`-Stub auf c-hsm-doc-Niveau (deps/compile/lint/test/coverage/build); ohne PKCS#11-Closure und ohne `proto-gen` | klein |
 | **B** | Wie A, plus `dev/softhsm/`-Init-Container + `docker-compose.dev.yml` für lokale SoftHSM-Anbindung; M1-PKCS#11-MVP-fertig ohne Multi-Sprache | mittel |
-| **C** | Wie B, plus `proto-gen`/`proto-check`-Stages mit gepinntem buf-Image und Stub-Build-Stages für Go/Java/Kotlin/C# | groß |
+| **C** | Wie B, plus `proto-gen`/`proto-check`-Stages mit gepinntem buf-Image (`RPC-TECH-007`) und Stub-Build-Stages für Go/Java/Kotlin/C# (Client + Server gemäss `RPC-NONGOAL-007`-Lockerung) | groß |
 
 Empfehlung: **B** als Einstiegs-Slice; **C** als Folge-Slice, sobald
 der Generator (`RPC-FA-GEN-*`) erste IDL-Artefakte erzeugt.

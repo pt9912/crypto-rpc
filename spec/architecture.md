@@ -17,10 +17,11 @@ Inhalte werden ergänzt, sobald die zugehörigen ADRs entstehen.
 
 | Abschnitt                                          | Bezug Lastenheft                                            |
 | -------------------------------------------------- | ----------------------------------------------------------- |
-| Systemkontext und Komponentenübersicht             | `RPC-PUE-001`, `RPC-PUE-002`                                |
-| Vier gleichrangige Backend-Domänen und ihre Grenzen | `RPC-ZB-001`, `RPC-FA-BACKEND-*`, `RPC-NONGOAL-006`        |
-| Monorepo-Layout und Modul-Schnitt                  | `RPC-ARCH-001`, `RPC-NFA-MAINT-001`                         |
-| Generator-Pipeline (`crypto-rpc-gen`)              | `RPC-FA-GEN-*`, `RPC-ARCH-002`                              |
+| Systemkontext und Komponentenübersicht             | `RPC-PUE-001`, `RPC-PUE-002`, `RPC-PUE-004`                 |
+| Vier gleichrangige Backend-Domänen und ihre Grenzen | `RPC-ZB-001`, `RPC-PUE-004`, `RPC-FA-BACKEND-*`, `RPC-NONGOAL-006`, `RPC-NONGOAL-007` |
+| Release-Scope und Profilstatus                     | `RPC-LESE-007`, `RPC-FA-BACKEND-005`                        |
+| Monorepo-Layout und Modul-Schnitt                  | `RPC-ARCH-001`, `RPC-ARCH-003`, `RPC-NFA-MAINT-001`         |
+| Generator-Pipeline (`crypto-rpc-gen`)              | `RPC-FA-GEN-*`, `RPC-ARCH-002`, `RPC-TECH-007`              |
 | RPC-Verhalten (Unary, Streaming, Cancellation)     | `RPC-FA-RPC-*`                                              |
 | Session-, Handle- und Lease-Modell                 | `RPC-FA-SESSION-*`, `RPC-FA-OBJ-*`                          |
 | Audit- und Observability-Architektur               | `RPC-FA-AUDIT-*`, `RPC-NFA-OBS-*`                           |
