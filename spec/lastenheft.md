@@ -6,8 +6,8 @@
 | Kurzbeschreibung | Monorepo für gleichrangige RPC-Domänen: PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM; MVP zunächst PKCS#11 |
 | Zielplattform    | Linux-Container und native Linux-Server; PKCS#11-HSMs, Netzwerk-HSMs, Cloud-HSMs und Cloud-KMS-Dienste wie AWS KMS, Google Cloud KMS und Azure Key Vault / Managed HSM |
 | Hauptnutzer      | Entwickler und Plattformteams, die PKCS#11-, Cloud-KMS-, Netzwerk-HSM- oder Cloud-HSM-Operationen über Prozess-, Host- oder Sprachgrenzen hinweg nutzbar machen müssen |
-| Version          | 0.1                                                                        |
-| Status           | Entwurf                                                                    |
+| Version          | 0.2                                                                        |
+| Status           | Entwurf, fachlich verfeinert                                               |
 | Datum            | 2026-05-31                                                                 |
 | Begleitdokument  | [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation; [spec/architecture.md](architecture.md) – Architekturüberblick |
 
@@ -37,8 +37,8 @@ Eine Anforderung gilt nur dann als erfüllt, wenn der zugehörige Belegtyp im Re
 | Anforderungsklasse                  | Zulässiger Beleg                                                                   |
 | ----------------------------------- | ---------------------------------------------------------------------------------- |
 | Funktionale Anforderungen (`FA-*`)  | automatisierter Integrationstest gegen SoftHSM oder reproduzierbarer manueller Test |
-| Generator (`FA-GEN-*`)              | Golden-File-Test für generierte IDL/Stubs plus Parser-Test gegen gepinnte OASIS-Quellen |
-| Protokoll und API (`API-*`)         | Protobuf-Artefakt, generierte Sprach-Stubs und Kontrakttest                         |
+| Generator (`FA-GEN-*`)              | Golden-File-Test für generierte IDL, Client-Stubs und Server-Stubs plus Parser-Test gegen gepinnte OASIS-Quellen |
+| Protokoll und API (`API-*`)         | Protobuf-Artefakt, generierte Client-/Server-Stubs und Kontrakttest                 |
 | Produkteinsatz und Use Cases (`PE-*`) | Trace auf funktionale Anforderungen oder automatisierter/reproduzierbarer Use-Case-Test |
 | Produktübersicht und Vertrauensgrenzen (`PUE-*`) | Architektur- oder Sicherheitsbeleg gemäß Inhalt der Anforderung                         |
 | Architektur (`ARCH-*`)              | Architekturentscheid (ADR) plus statischer Importcheck                             |
@@ -103,6 +103,20 @@ Es gilt:
 - Performance-, Failure- und Herstellerkompatibilitätsabnahmen DÜRFEN NICHT ausschließlich gegen SoftHSM erbracht werden.
 - Tests gegen SoftHSM belegen API- und Mapping-Korrektheit, nicht Produktionsfähigkeit.
 
+### RPC-LESE-007 – Release-Scope und Profilstatus
+
+Anforderungen und Profile MÜSSEN einem nachvollziehbaren Scope- und Statusbegriff zugeordnet werden:
+
+| Begriff | Bedeutung |
+| ------- | --------- |
+| MVP | Umfang, der für die erste Abnahme zwingend erfüllt sein muss. |
+| Post-MVP | Zielbild oder spätere Fähigkeit; nicht MVP-blockierend, solange nicht in einen Release-Scope aufgenommen. |
+| Beispielprofil | Dokumentiertes Entwicklungs-, Test- oder Demonstrationsprofil ohne Produktionszusage. |
+| Experimentell | Implementiert oder skizziert, aber ohne vollständige Abnahme- und Betriebszusage. |
+| Produktionsfähig deklariert | Profil oder Adapter mit dokumentierten Betriebsgrenzen, Security-Konfiguration und erfüllten domänenspezifischen Abnahmekriterien. |
+
+Ein Backend-Profil oder Adapter DARF nur als produktionsfähig deklariert werden, wenn die zugehörigen Abnahmekriterien aus Kapitel 16 erfüllt und die Betriebsgrenzen dokumentiert sind.
+
 ---
 
 ## 1. Zielbestimmung
@@ -111,9 +125,9 @@ Es gilt:
 
 `crypto-rpc` MUSS ein Monorepo für vier gleichrangige Kryptografie-RPC-Domänen bereitstellen: PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM.
 
-Der MVP MUSS zunächst die PKCS#11-API semantisch 1:1 abbilden und aus offiziellen OASIS-PKCS#11-Quellen reproduzierbar generierbare IDL- und Stub-Artefakte für Go, Java, Kotlin und C# erzeugen. Cloud-KMS, Netzwerk-HSM und Cloud-HSM sind gleichrangige Ziel-Domänen, blockieren den MVP aber nicht.
+Der MVP MUSS zunächst die PKCS#11-API semantisch 1:1 abbilden und aus offiziellen OASIS-PKCS#11-Quellen reproduzierbar generierbare IDL-, Client-Stub- und Server-Stub-Artefakte für Go, Java, Kotlin und C# erzeugen. Cloud-KMS, Netzwerk-HSM und Cloud-HSM sind gleichrangige Ziel-Domänen, blockieren den MVP aber nicht.
 
-Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Sprach-Stubs für Go/Java/Kotlin/C# und führt eine Signatur-Operation über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
+Akzeptanz: Ein Referenzlauf generiert aus gepinnten OASIS-Headern und Mapping-Regeln eine Protobuf-IDL, Client- und Server-Stubs für Go/Java/Kotlin/C# und führt eine Signatur-Operation über einen Go-Referenzserver gegen SoftHSM erfolgreich aus.
 
 ### RPC-ZB-002 – Produktvision
 
@@ -130,7 +144,7 @@ Für PKCS#11 sollen Anwendungen dieselben Operationen, Returncodes, Sessions, Ha
 | MUSS   | MVP: Generator aus OASIS-Headern plus gepflegter Mapping-Datei für PKCS#11-RPC-Semantik.                  |
 | MUSS   | MVP: Protobuf-IDL als kanonische RPC-Schnittstelle für PKCS#11.                                           |
 | MUSS   | MVP: Go-Referenzserver mit internem PKCS#11-Backend über `miekg/pkcs11` oder äquivalentes Binding.        |
-| MUSS   | MVP: generierte Go-, Java-, Kotlin- und C#-Client-Stubs für PKCS#11.                                      |
+| MUSS   | MVP: generierte Go-, Java-, Kotlin- und C#-Client- und Server-Stubs für PKCS#11.                          |
 | MUSS   | MVP: numerische PKCS#11-Returncodes (`CK_RV`) in jeder fachlichen Response erhalten.                      |
 | SOLLTE | Mapping für Mechanism- und Attribute-Parameter typsicher modellieren, soweit die Spezifikation dies zulässt. |
 | SOLLTE | Mehrere PKCS#11-Versionen über versionierte Mapping-Profile unterstützen.                                 |
@@ -178,14 +192,14 @@ Sekundäre Umgebungen, die im CI mitgeführt werden SOLLEN:
 - dokumentierte Beispielprofile für Netzwerk-HSM und Cloud-HSM,
 - Mock- oder Sandbox-Backends für Cloud-KMS-Profile,
 - Linux ARM64 als Best-Effort,
-- generierte Stubs für Go, Java, Kotlin und C# ohne laufendes HSM.
+- generierte Client- und Server-Stubs für Go, Java, Kotlin und C# ohne laufendes HSM.
 
 ### RPC-PE-004 – Anwendungsfälle
 
 Folgende Use Cases MÜSSEN unterstützt werden:
 
 - **UC-1 PKCS#11 Generate-IDL (MVP)**: Generator erzeugt eine versionierte Protobuf-IDL aus OASIS-Headern und Mapping-Datei.
-- **UC-2 PKCS#11 Generate-Stubs (MVP)**: Generator-Workflow erzeugt Go-, Java-, Kotlin- und C#-Stubs.
+- **UC-2 PKCS#11 Generate-Stubs (MVP)**: Generator-Workflow erzeugt Go-, Java-, Kotlin- und C#-Client- und Server-Stubs.
 - **UC-3 PKCS#11 List-Slots (MVP)**: Client ruft `C_GetSlotList` und `C_GetTokenInfo` über RPC auf.
 - **UC-4 PKCS#11 Open-Session/Login (MVP)**: Client eröffnet eine Session und meldet sich gemäß konfiguriertem Credential-Modell mit `C_Login` an.
 - **UC-5 PKCS#11 Find-Object (MVP)**: Client führt `C_FindObjectsInit`/`C_FindObjects`/`C_FindObjectsFinal` aus.
@@ -210,8 +224,8 @@ Folgende Use Cases SOLLEN unterstützt werden:
 
 ```text
 +----------------------+       gRPC/TLS        +----------------------+
-| Go / Java / Kotlin   |  <----------------->  |  crypto-rpc-server    |
-| C# Client-Stubs      |                       |  Go Runtime          |
+| Go / Java / Kotlin   |  <----------------->  | crypto-rpc-server    |
+| C# Client-Stubs      |                       | Go Server-Stubs      |
 +----------+-----------+                       +----------+-----------+
            ^                                              |
            | generated from proto                         | PKCS#11
@@ -221,7 +235,7 @@ Folgende Use Cases SOLLEN unterstützt werden:
 | headers + spec + map |                       | Vendor PKCS#11 lib   |
 +----------+-----------+                       +----------+-----------+
            |                                              |
-           | post-MVP kms/v1                             | KMS SDK/API
+           | post-MVP kms/v1                              | KMS SDK/API
            v                                              v
 +----------------------+                       +----------------------+
 | kms/v1 API family    |                       | AWS/GCP/Azure KMS    |
@@ -235,12 +249,12 @@ Folgende Use Cases SOLLEN unterstützt werden:
 | `crypto-rpc-gen`      | Go               | Parser, Modellbildung, Mapping-Anwendung, Protobuf-Generierung                 |
 | `proto/pkcs11/v1`     | Proto3           | kanonische RPC-IDL, Messages, Services, Returncode-Modell                      |
 | `proto/kms/v1`        | Proto3           | Cloud-KMS-IDL mit ressourcenorientierten Key-Operationen                       |
-| `server/pkcs11-go`    | Go               | PKCS#11-Referenzserver, Backend-Integration, Session-/Handle-Verwaltung, Audit, Metriken |
+| `server/pkcs11-go`    | Go               | PKCS#11-Referenzserver auf Basis generierter Go-Server-Stubs, Backend-Integration, Session-/Handle-Verwaltung, Audit, Metriken |
 | `server/kms-go`       | Go               | KMS-Server/Adapter für Cloud-KMS-Profile (post-MVP)                            |
-| `runtime/go`          | Go               | generierte und handgeschriebene Client-Hilfen                                  |
-| `runtime/java`        | Java             | generierte Java-Stubs und optionale ergonomische Wrapper                       |
-| `runtime/kotlin`      | Kotlin           | generierte Kotlin-Stubs und Coroutine-fähige Wrapper                           |
-| `runtime/csharp`      | C#               | generierte .NET-Stubs und optionale Wrapper                                    |
+| `runtime/go`          | Go               | generierte Go-Client- und Go-Server-Stubs sowie handgeschriebene Client-/Server-Hilfen |
+| `runtime/java`        | Java             | generierte Java-Client- und Java-Server-Stubs sowie optionale ergonomische Wrapper |
+| `runtime/kotlin`      | Kotlin           | generierte oder Kotlin-kompatible Client-/Server-Stubs und Coroutine-fähige Wrapper |
+| `runtime/csharp`      | C#               | generierte .NET-Client- und .NET-Server-Stubs sowie optionale Wrapper          |
 | `mappings/`           | YAML             | manuelle Semantik-Ergänzungen für Pointer, Buffer, Structs und Sonderfälle (YAML ist kanonisch) |
 | `profiles/`           | YAML             | Betriebsprofile für SoftHSM, Netzwerk-HSMs, Cloud-HSMs und Cloud-KMS-Provider (YAML ist kanonisch) |
 | `third_party/oasis/`  | Header/Markdown  | gepinnte OASIS-PKCS#11-Quellen oder Reproduktionshinweise                      |
@@ -254,6 +268,19 @@ Folgende Vertrauensgrenzen MÜSSEN als solche dokumentiert und in Code/Konfigura
 - **RPC-Server ↔ Cloud-KMS**: Cloud-Credentials, Provider-Region, Key-Ressourcen und IAM-/RBAC-Berechtigungen MÜSSEN serverseitig kontrolliert werden.
 - **Generator ↔ OASIS-Quellen**: Header- und Spezifikationsversionen MÜSSEN reproduzierbar gepinnt sein.
 - **Audit-Sink**: Audit-Ausgabe DARF NICHT PINs, Klartextdaten, private Schlüsselwerte oder unmaskierte Secret-Attribute enthalten.
+
+### RPC-PUE-004 – Backend-Domänen und API-Familien
+
+Die vier Ziel-Domänen MÜSSEN in Dokumentation, Konfiguration und Code als getrennte fachliche Domänen erkennbar bleiben:
+
+| Domäne | Primäre API-Familie | MVP-Status | Bemerkung |
+| ------ | ------------------- | ---------- | --------- |
+| PKCS#11 | `pkcs11/v1` | MVP | Semantische 1:1-Abbildung der Kern-API. |
+| Netzwerk-HSM | `pkcs11/v1` oder spätere eigene Extension | Post-MVP | Nutzt PKCS#11, wenn der Hersteller eine PKCS#11-Client-Library bereitstellt. |
+| Cloud-HSM | `pkcs11/v1` oder spätere eigene Extension | Post-MVP | Cloud-spezifische Cluster-, Zertifikats- und IAM/RBAC-Aspekte bleiben Profilbestandteil. |
+| Cloud-KMS | `kms/v1` | Post-MVP | Ressourcenorientierte API ohne PKCS#11-Sessions, Slots oder Handles. |
+
+Eine gemeinsame Infrastruktur für Transport, Authentisierung, Observability oder Build DARF die fachliche Trennung der API-Familien nicht aufheben.
 
 ---
 
@@ -273,11 +300,11 @@ Der MVP MUSS einen Go-Referenzserver bereitstellen, der die Kern-API gegen SoftH
 
 Akzeptanz: Ein Integrationstest initialisiert einen SoftHSM-Token, meldet sich gemäß SoftHSM-Profil an, findet einen privaten Schlüssel und erzeugt über RPC eine gültige Signatur.
 
-### RPC-MVP-003 – Sprach-Stubs
+### RPC-MVP-003 – Client- und Server-Stubs
 
-Der MVP MUSS Go-, Java-, Kotlin- und C#-Stubs aus der Protobuf-IDL erzeugen.
+Der MVP MUSS Go-, Java-, Kotlin- und C#-Client- und Server-Stubs aus der Protobuf-IDL erzeugen. Server-Stubs umfassen mindestens die sprachtypischen Service-Interfaces, abstrakten Basisklassen oder Registrierungsartefakte, auf deren Basis eine Serverimplementierung die generierten RPC-Methoden implementieren kann.
 
-Akzeptanz: CI-Build kompiliert alle generierten Stubs ohne manuelle Nachbearbeitung.
+Akzeptanz: CI-Build kompiliert alle generierten Client- und Server-Stubs ohne manuelle Nachbearbeitung. Für Go MUSS der Referenzserver gegen die generierten Go-Server-Stubs bauen. Für Java, Kotlin und C# MUSS mindestens ein Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Artefakte bauen; ein vollständiges PKCS#11-Backend ist dafür nicht erforderlich.
 
 ### RPC-MVP-004 – Returncode-Treue
 
@@ -331,6 +358,10 @@ Das Projekt DARF PKCS#11-Semantik nicht durch eine vereinfachte Crypto-Service-A
 
 Eine Cloud-KMS-API-Familie DARF NICHT als PKCS#11-kompatible Schnittstelle ausgegeben werden, solange sie keine Slots, Tokens, Sessions, Handles, `CK_ATTRIBUTE` und `CK_RV`-Semantik abbildet. Cloud-KMS MUSS als getrennte API-Familie dokumentiert werden.
 
+### RPC-NONGOAL-007 – Keine vollständigen Referenzserver pro Sprache im MVP
+
+Der MVP verlangt Client- und Server-Stubs für Go, Java, Kotlin und C#, aber keine vollständige PKCS#11-Referenzserver-Implementierung in jeder dieser Sprachen. Für Nicht-Go-Sprachen reicht im MVP ein kompilierbarer Stub-Harness oder Mock-Server-Kontrakttest, der die generierten Server-Artefakte verwendet und deren Integrationsfähigkeit nachweist.
+
 ---
 
 ## 6. Funktionale Anforderungen
@@ -341,7 +372,7 @@ Eine Cloud-KMS-API-Familie DARF NICHT als PKCS#11-kompatible Schnittstelle ausge
 
 Die kanonische RPC-Schnittstelle MUSS als Protobuf v3 beschrieben werden.
 
-Akzeptanz: `proto/pkcs11/v1/pkcs11.proto` wird im CI validiert und als Quelle für alle Sprach-Stubs verwendet.
+Akzeptanz: `proto/pkcs11/v1/pkcs11.proto` wird im CI validiert und als Quelle für alle Client- und Server-Stubs verwendet.
 
 #### RPC-FA-IDL-002 – Semantisch 1:1 statt ABI 1:1
 
@@ -359,7 +390,11 @@ PKCS#11-Handles (`CK_SESSION_HANDLE`, `CK_OBJECT_HANDLE`) MÜSSEN im RPC als opa
 
 #### RPC-FA-IDL-005 – Attribute-Modell
 
-`CK_ATTRIBUTE` MUSS typ- und längenerhaltend abbildbar sein. Die IDL MUSS zwischen leerem Wert, nicht angefragtem Wert und nicht verfügbarem/sensitivem Wert unterscheiden können.
+`CK_ATTRIBUTE` MUSS typ- und längenerhaltend abbildbar sein. Die IDL MUSS zwischen leerem Wert, angefragter Länge ohne Wert, nicht angefragtem Wert und nicht verfügbarem/sensitivem Wert unterscheiden können.
+
+#### RPC-FA-IDL-006 – Größen- und Streaming-Grenzen
+
+Die IDL MUSS für Byte-Felder und wiederholte Felder dokumentierte Größenlimits abbilden oder referenzieren können. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
 
 ### 6.2 Generator
 
@@ -377,11 +412,15 @@ Generierte Artefakte MÜSSEN reproduzierbar sein. Gleiche Eingaben MÜSSEN byte-
 
 #### RPC-FA-GEN-004 – Versionierte Profile
 
-Der Generator MUSS mindestens ein Profil für PKCS#11 v3.x unterstützen. Unterstützung für PKCS#11 v2.40 SOLLTE als separates Profil möglich sein.
+Der Generator MUSS mindestens ein Profil für PKCS#11 v3.2 unterstützen. Unterstützung für PKCS#11 v2.40 SOLLTE als separates Profil möglich sein.
 
 #### RPC-FA-GEN-005 – Golden-File-Tests
 
 Der Generator MUSS Golden-File-Tests für IDL, Konstanten und ausgewählte Service-Methoden bereitstellen.
+
+#### RPC-FA-GEN-006 – Mapping-Validierung
+
+Der Generator MUSS Mapping-Dateien gegen die gepinnten OASIS-Quellen validieren. Unbekannte Funktionen, nicht mehr passende Struct-Felder, widersprüchliche Parameter-Richtungen, unreferenzierte Sonderregeln und nicht deklarierte manuelle Overrides MÜSSEN den Generatorlauf abbrechen.
 
 ### 6.3 PKCS#11-Kernsemantik
 
@@ -400,6 +439,10 @@ Jede fachliche PKCS#11-Response MUSS ein `CK_RV`-Feld enthalten. Transportfehler
 #### RPC-FA-P11-004 – CK_ULONG-Normalisierung
 
 `CK_ULONG` und verwandte numerische Typen MÜSSEN im RPC in einer plattformneutralen Breite abgebildet werden. Der MVP MUSS hierfür `uint64` verwenden.
+
+#### RPC-FA-P11-005 – Zwei-Phasen-Buffer-Abfragen
+
+PKCS#11-Aufrufe mit Längenabfrage- und Wertabfrage-Semantik, insbesondere `C_GetAttributeValue`, MÜSSEN so modelliert werden, dass Clients sowohl benötigte Längen als auch verfügbare Werte und PKCS#11-Fehlercodes unverfälscht erhalten. Sensitive oder nicht extrahierbare Werte DÜRFEN NICHT durch leere Werte maskiert werden; der Status MUSS unterscheidbar bleiben.
 
 ### 6.4 RPC-Verhalten
 
@@ -428,6 +471,10 @@ Sessions SOLLTEN eine konfigurierbare Idle-Timeout-Lease besitzen, damit verlore
 #### RPC-FA-SESSION-003 – Login-Credential-Modell
 
 `C_Login` MUSS die PKCS#11-Login-Semantik erhalten. Produktive Profile MÜSSEN PINs und HSM-Credentials serverseitig über konfigurierte Secret-Quellen oder serverseitig auflösbare Credential-Referenzen bereitstellen. Die Übertragung roher PIN-Werte im RPC DARF nur in explizit dokumentierten Entwicklungs- oder Testprofilen erlaubt sein.
+
+#### RPC-FA-SESSION-004 – Zustandsübergänge und Aufräumen
+
+Der Server MUSS begonnene zustandsbehaftete Sequenzen wie Find-, Sign-, Encrypt- oder Decrypt-Operationen pro Session verfolgen. Bei Fehlern, Deadline-Abbruch, Client-Abbruch oder Lease-Ablauf MUSS der Server den PKCS#11-Zustand entweder sauber abschließen, invalidieren oder die Session schließen und diesen Zustand auditierbar machen.
 
 #### RPC-FA-OBJ-001 – Object-Handles
 
@@ -469,6 +516,10 @@ Der Server SOLL jede kryptografische Operation mit Zeitstempel, Client-Identitä
 
 Audit-Logs DÜRFEN NICHT PINs, Klartextdaten, private Schlüsselwerte, Secret-Key-Werte oder rohe Signatur-Inputs enthalten.
 
+#### RPC-FA-AUDIT-003 – Audit-Aktivierung in produktiven Profilen
+
+Produktionsfähig deklarierte Profile MÜSSEN Audit-Ausgaben aktivieren oder an ein dokumentiertes externes Audit-System anbinden. Das Profil MUSS festlegen, welche Felder Pflichtfelder sind, welche Felder optional fehlen dürfen und wie Request-IDs mit Server-Logs und Metriken korrelieren.
+
 ### 6.8 Backend-Profile
 
 #### RPC-FA-BACKEND-001 – Netzwerk-HSM als PKCS#11-Profil
@@ -487,6 +538,10 @@ Cloud-KMS-Dienste ohne PKCS#11-Semantik MÜSSEN außerhalb des MVP über eine ge
 
 Der Server DARF Cloud-KMS-Operationen nicht stillschweigend als PKCS#11-Operationen tarnen. Jede Brücke zwischen PKCS#11 und Cloud-KMS MUSS explizit als Adapter oder Kompatibilitätsmodus dokumentiert werden.
 
+#### RPC-FA-BACKEND-005 – Supportstatus pro Backend-Profil
+
+Jedes Backend-Profil MUSS einen Status gemäß `RPC-LESE-007` tragen. Der Status MUSS im Profil selbst oder in einer referenzierten Profilmatrix stehen und mindestens unterstützte API-Familie, getestete Backend-Versionen, bekannte Einschränkungen, Security-Annahmen und Abnahmebelege nennen.
+
 ---
 
 ## 7. Schnittstellen
@@ -497,19 +552,19 @@ Die Protobuf-IDL MUSS versionierte Pakete verwenden, z. B. `cryptorpc.pkcs11.v1`
 
 ### RPC-API-GO-001 – Go-Stubs
 
-Das Projekt MUSS Go-Stubs generieren und einen Go-Client-Build im CI prüfen.
+Das Projekt MUSS Go-Client- und Go-Server-Stubs generieren und im CI sowohl einen Go-Client-Build als auch den Go-Referenzserver gegen die generierten Service-Interfaces prüfen.
 
 ### RPC-API-JAVA-001 – Java-Stubs
 
-Das Projekt MUSS Java-Stubs generieren und einen Java-Client-Build im CI prüfen.
+Das Projekt MUSS Java-Client- und Java-Server-Stubs generieren und im CI sowohl einen Java-Client-Build als auch einen Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Service-Basisklassen prüfen.
 
 ### RPC-API-KOTLIN-001 – Kotlin-Stubs
 
-Das Projekt MUSS Kotlin-Stubs generieren oder Java-Stubs so bereitstellen, dass Kotlin-Clients sie ohne manuelle Anpassung verwenden können.
+Das Projekt MUSS Kotlin-Client- und Kotlin-Server-Stubs generieren oder Java-/Kotlin-kompatible Stubs so bereitstellen, dass Kotlin-Clients und Kotlin-Stub-Harnesses sie ohne manuelle Anpassung verwenden können.
 
 ### RPC-API-CSHARP-001 – C#-Stubs
 
-Das Projekt MUSS C#/.NET-Stubs generieren und einen .NET-Client-Build im CI prüfen.
+Das Projekt MUSS C#/.NET-Client- und Server-Stubs generieren und im CI sowohl einen .NET-Client-Build als auch einen Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Service-Basisklassen prüfen.
 
 ### RPC-API-CFG-001 – Server-Konfiguration
 
@@ -518,6 +573,10 @@ Der Server MUSS mindestens Modulpfad, Token-/Slot-Auswahl, Secret- und Credentia
 ### RPC-API-CFG-002 – Backend-Profile
 
 Das Projekt MUSS eine Konfigurationsstruktur für Backend-Profile bereitstellen. Profile SOLLEN mindestens `softhsm`, `network-hsm`, `cloud-hsm` und `cloud-kms` als Klassen unterscheiden.
+
+### RPC-API-CFG-003 – Konfigurationsvalidierung
+
+Der Server MUSS Konfiguration beim Start validieren und bei fehlenden Pflichtfeldern, unsicheren produktiven Defaults, unbekannten Profilklassen oder widersprüchlichen Secret-Quellen mit einem eindeutigen Fehler abbrechen. Entwicklungs-Ausnahmen MÜSSEN explizit im Profil aktiviert und im Startlog sichtbar sein.
 
 ### RPC-API-KMS-001 – Cloud-KMS-IDL
 
@@ -577,6 +636,10 @@ Builds SOLLEN SBOM, Dependency-Scanning und reproduzierbare Generator-Artefakte 
 
 Der Server MUSS PINs, HSM-Credentials, Klartextdaten und rohe Signatur-Inputs nur so lange im Speicher halten, wie sie für die jeweilige Operation erforderlich sind. Persistentes Speichern, Caching und Ausgabe in Panic-/Crash-Dumps MÜSSEN verhindert oder nachweisbar redigiert werden.
 
+#### RPC-NFA-SEC-007 – Missbrauchs- und Lastbegrenzung
+
+Der Server MUSS konfigurierbare Limits für gleichzeitige Sessions, offene Multi-Part-Operationen, Request-Größen, Queue-Längen und Operationsrate pro Client-Identität bereitstellen. Überschrittene Limits MÜSSEN als unterscheidbare Server-Policy- oder Ressourcenfehler auditierbar sein und DÜRFEN nicht als PKCS#11-Backendfehler getarnt werden.
+
 ### 8.4 Observability und Betrieb
 
 #### RPC-NFA-OBS-001 – Metriken
@@ -587,9 +650,17 @@ Der Server MUSS Metriken für RPC-Latenz, PKCS#11-Latenz, Returncodes, Session-P
 
 Der Server MUSS strukturierte Logs (z. B. JSON-Lines) mit korrelierbarer Request-ID, Client-Identität, Funktion, Slot/Token, Session-ID, `CK_RV` und Latenz ausgeben. Logs MÜSSEN die Geheimnisverbote aus `RPC-FA-AUDIT-002` und `RPC-NFA-SEC-003` einhalten.
 
+#### RPC-NFA-OBS-003 – Trace- und Metrikhygiene
+
+Traces, Metriken und Labels DÜRFEN keine hochkardinalen Secret-, Klartext-, Signaturinput-, Schlüsselwert- oder vollständigen Objektattributdaten enthalten. Key- und Object-Identifier MÜSSEN pseudonymisiert, gekürzt oder über ein dokumentiertes Allowlist-Schema begrenzt werden.
+
 #### RPC-NFA-OPS-001 – Health und Readiness
 
 Der Server MUSS Liveness und Readiness trennen. Readiness MUSS HSM-Erreichbarkeit und Session-Eröffnungsfähigkeit berücksichtigen.
+
+#### RPC-NFA-OPS-002 – Runbook für Fehlerfälle
+
+Produktionsfähig deklarierte Profile MÜSSEN ein Runbook für HSM-Verbindungsfehler, Session-Erschöpfung, Credential-Rotation, TLS-Zertifikatswechsel, Backend-Failover und Graceful Shutdown enthalten.
 
 ### 8.5 Wartbarkeit und Portabilität
 
@@ -631,6 +702,10 @@ crypto-rpc/
 
 Der Generator MUSS ein kanonisches internes Modell aus Headern und Mapping-Regeln bilden. Ausgaben für Protobuf und Dokumentation DÜRFEN NICHT direkt aus Header-Parser-Events erzeugt werden.
 
+### RPC-ARCH-003 – Domänentrennung im Code
+
+PKCS#11-, Cloud-KMS-, Netzwerk-HSM- und Cloud-HSM-spezifische Pakete MÜSSEN so getrennt sein, dass eine Domäne keine fachliche Semantik einer anderen Domäne importieren muss. Gemeinsame Pakete DÜRFEN nur domänenneutrale Infrastruktur wie Transport, Authentisierung, Konfiguration, Logging, Metriken und Build-Hilfen enthalten.
+
 ### RPC-PRINC-001 – Explizite Semantik
 
 Jede Abweichung von der C-ABI MUSS explizit im Mapping dokumentiert sein.
@@ -645,7 +720,7 @@ Der RPC-Server DARF keine kryptografische Operation durch Host-Software ersetzen
 
 ### RPC-TECH-001 – Go
 
-Generator und Referenzserver MÜSSEN in Go implementiert werden.
+Der MVP-Generator und der MVP-Referenzserver MÜSSEN in Go implementiert werden. Diese Vorgabe beschränkt nicht die Generierung von Server-Stubs für Java, Kotlin und C#.
 
 ### RPC-TECH-002 – Protobuf und gRPC
 
@@ -666,6 +741,10 @@ Cloud-KMS-Adapter SOLLEN offizielle Provider-SDKs oder dokumentierte Provider-RE
 ### RPC-TECH-006 – Netzwerk-HSM-Client-Libraries
 
 Netzwerk-HSM-Profile SOLLEN über die jeweilige Vendor-PKCS#11-Client-Library angebunden werden, wenn der Hersteller PKCS#11 unterstützt. Native Vendor-Protokolle ohne PKCS#11 SOLLTEN erst nach einem ADR und außerhalb des MVP unterstützt werden.
+
+### RPC-TECH-007 – Gepinnte Generator-Toolchain
+
+Protobuf-Compiler, Sprach-Plugins, Generator-Version und relevante Build-Tools MÜSSEN für reproduzierbare Artefakte versioniert oder gepinnt werden. Ein Generatorlauf MUSS die verwendeten Tool-Versionen in einem Build- oder Quellenmanifest ausgeben.
 
 ---
 
@@ -721,6 +800,10 @@ Das Projekt DARF keine Aussage treffen, dass der RPC-Server selbst FIPS-zertifiz
 
 Cloud-KMS-Profile MÜSSEN dokumentieren, welche Compliance-Aussagen vom Provider stammen und welche Aussagen das Projekt selbst trifft. Provider-Zertifizierungen DÜRFEN NICHT automatisch auf den RPC-Server übertragen werden.
 
+### RPC-COMP-005 – Artefakt-Provenienz
+
+Release-Artefakte SOLLEN nachvollziehbar machen, aus welchen OASIS-Quellen, Mapping-Dateien, Generator-Versionen und Protobuf-Toolchains sie erzeugt wurden. Für produktionsfähig deklarierte Releases MUSS diese Provenienz im Repository oder Release-Bundle prüfbar sein.
+
 ---
 
 ## 13. Bedrohungsmodell
@@ -752,6 +835,10 @@ Netzwerk-HSM-Verbindungen können abbrechen oder in Failover-Zustände wechseln.
 ### RPC-THREAT-007 – Cloud-KMS-Berechtigungsdrift
 
 Cloud-KMS-Berechtigungen können sich außerhalb des Projekts durch IAM-/RBAC-Änderungen verändern. Cloud-KMS-Profile SOLLTEN Health- und Permission-Checks bereitstellen, ohne produktive Schlüsseloperationen auszuführen.
+
+### RPC-THREAT-008 – Signing-Oracle-Missbrauch
+
+Ein autorisierter oder kompromittierter Client könnte den Server als Signing Oracle missbrauchen. Der Server MUSS Mechanism-, Key- und Client-Policies unterstützen und SOLLTE profilspezifische Limits oder Freigabelisten für besonders kritische Signaturmechanismen bereitstellen.
 
 ---
 
@@ -793,6 +880,12 @@ Netzwerk-HSMs haben andere Latenz-, Timeout- und Failover-Profile als lokale HSM
 
 Mitigation: Backend-Profile, Health-Checks, Session-Reconnect-Strategien und produktionsnahe Abnahmetests pro HSM-Profil.
 
+### RPC-RISK-007 – Scope-Creep durch vier Domänen
+
+PKCS#11, Cloud-KMS, Netzwerk-HSM und Cloud-HSM können unterschiedliche Release-Geschwindigkeiten und Betriebsmodelle erzwingen. Risiko: Die MVP-Abnahme wird durch Post-MVP-Domänen blockiert oder eine spätere Domäne übernimmt unpassende Annahmen aus PKCS#11.
+
+Mitigation: klare API-Familien, Profilstatus nach `RPC-LESE-007`, getrennte Abnahmekriterien und domänengetrennte Codepakete.
+
 ---
 
 ## 15. Annahmen
@@ -829,11 +922,11 @@ Ein automatisierter Test MUSS über RPC gegen SoftHSM Slots listen, eine Session
 
 ### RPC-ACCEPT-002 – Generator-Abnahme
 
-Ein CI-Job MUSS IDL und Stubs aus gepinnten Quellen generieren und gegen Golden Files prüfen. Der Job MUSS fehlschlagen, wenn das Quellenmanifest, die Mapping-Datei oder ein generiertes Artefakt nicht zum eingecheckten Referenzstand passt.
+Ein CI-Job MUSS IDL, Client-Stubs und Server-Stubs aus gepinnten Quellen generieren und gegen Golden Files prüfen. Der Job MUSS fehlschlagen, wenn das Quellenmanifest, die Mapping-Datei oder ein generiertes Artefakt nicht zum eingecheckten Referenzstand passt.
 
 ### RPC-ACCEPT-003 – Sprach-Abnahme
 
-Go-, Java-, Kotlin- und C#-Clients MÜSSEN mindestens einen Smoke-Test gegen den Referenzserver ausführen oder kompilierbare Stubs mit Mock-Server-Kontrakttest nachweisen.
+Go-, Java-, Kotlin- und C#-Artefakte MÜSSEN mindestens einen Client-Smoke-Test gegen den Go-Referenzserver nachweisen. Zusätzlich MUSS Go den Referenzserver gegen die generierten Server-Stubs bauen; Java, Kotlin und C# MÜSSEN einen kompilierbaren Stub-Harness oder Mock-Server-Kontrakttest gegen die generierten Server-Stubs nachweisen.
 
 ### RPC-ACCEPT-004 – Security-Abnahme
 
@@ -850,6 +943,14 @@ Für jedes als produktionsfähig deklarierte Netzwerk-HSM- oder Cloud-HSM-Profil
 ### RPC-ACCEPT-007 – Cloud-KMS-Profilabnahme
 
 Für jedes als produktionsfähig deklarierte Cloud-KMS-Profil MUSS ein dokumentierter Smoke-Test mindestens `ListKeys` oder `GetPublicKey` sowie eine nicht-destruktive Krypto-Operation gegen einen Test-/Sandbox-Key ausführen.
+
+### RPC-ACCEPT-008 – Traceability-Abnahme
+
+Ein Abnahme-Artefakt MUSS alle MVP-blockierenden Anforderungen auf mindestens einen Test, ein Skript, ein Runbook oder einen dokumentierten Review-Beleg abbilden. Anforderungen ohne Beleg DÜRFEN nicht als erfüllt markiert werden.
+
+### RPC-ACCEPT-009 – Secure-Defaults-Abnahme
+
+Ein automatisierter oder reproduzierbarer Starttest MUSS zeigen, dass ein produktives Profil ohne TLS, ohne starke Client-Authentisierung, mit rohen PINs im RPC oder mit fehlender Secret-Quelle nicht startet. Entwicklungsprofile MÜSSEN diese Abweichungen explizit aktivieren.
 
 ---
 
@@ -870,6 +971,10 @@ Der MVP MUSS vier Zielsprachen abdecken: Go, Java, Kotlin und C#.
 ### RPC-MENGE-004 – Backend-Profile
 
 Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cloud-HSM- und Cloud-KMS-Profile sind gleichrangige Ziel-Domänen, aber nicht Teil der MVP-Abnahme.
+
+### RPC-MENGE-005 – Nutzdaten- und Request-Limits
+
+Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Größe, Anzahl paralleler Sessions und Anzahl offener Multi-Part-Operationen dokumentieren. Die Limits MÜSSEN konfigurierbar sein und ihre Überschreitung MUSS deterministisch getestet werden können.
 
 ---
 
@@ -897,9 +1002,11 @@ Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cl
 | OCI | Open Container Initiative; Standard für Container-Images und Runtimes. |
 | Opaque Handle | Numerischer Wert, dessen Bedeutung nur der Server kennt. |
 | PKCS#11 | Standardisierte API für kryptografische Tokens und HSMs. |
+| Produktionsfähig deklariert | Profilstatus mit dokumentierter Betriebsgrenze, Security-Konfiguration und bestandener domänenspezifischer Abnahme. |
 | SBOM | Software Bill of Materials; maschinenlesbare Liste eingesetzter Abhängigkeiten und Lizenzen. |
 | Secret-Quelle | Externes System oder lokale Konfiguration, aus der PINs, Tokens, Zertifikate oder Provider-Credentials geladen werden. |
 | Semantisch 1:1 | Gleiche fachliche Operation und Fehlersemantik, aber transportgerechte Datentypen statt C-Pointer. |
+| Signing Oracle | Missbrauchsmuster, bei dem ein Dienst wiederholt Signaturen für vom Angreifer gewählte Daten erzeugt. |
 
 ---
 
