@@ -11,7 +11,7 @@
 ## Trigger
 
 `crypto-rpc` hat noch keine Build-Pipeline. Sobald der erste produktive
-Slice (M1 — PKCS#11-MVP, `RPC-MVP-001…006`) beginnt, brauchen wir die
+Slice (M1 — PKCS#11-MVP, `RPC-MVP-001…007`) beginnt, brauchen wir die
 gleiche reproduzierbare Docker-only-Harness wie die Schwesterprojekte:
 ein Makefile mit den Aggregator-Targets `gates`/`ci`/`fullbuild`, ein
 multi-stage Dockerfile mit Per-Stage-Targets, gepinnte Toolchain und

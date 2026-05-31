@@ -9,7 +9,7 @@
 | Version          | 0.1                                                                        |
 | Status           | Entwurf                                                                    |
 | Datum            | 2026-05-31                                                                 |
-| Begleitdokument  | [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation (geplant) |
+| Begleitdokument  | [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation; [spec/architecture.md](architecture.md) – Architekturüberblick |
 
 ---
 
@@ -27,6 +27,8 @@ In diesem Dokument haben die in Großbuchstaben geschriebenen Schlüsselwörter 
 Klein geschriebene Formen ("muss", "soll", "kann") sind beschreibend und nicht normativ.
 
 MVP-blockierend sind ausschließlich `MUSS`-Anforderungen aus Kapitel 4 (MVP-Umfang) sowie Anforderungen, die ausdrücklich den Satzbestandteil `Der MVP MUSS` oder eine Use-Case-Kennzeichnung `(MVP)` tragen. `SOLLTE`- und `KANN`-Anforderungen blockieren die MVP-Abnahme nicht, auch wenn sie den MVP erwähnen.
+
+Anforderungen ohne MVP-Kennzeichnung beschreiben den produktweiten Zielzustand. Sie werden abnahmebindend, sobald die betroffene Domäne oder Fähigkeit in einen Release-Scope aufgenommen wird.
 
 ### RPC-LESE-002 – Abnahme und Belegtypen
 
@@ -51,6 +53,8 @@ Eine Anforderung gilt nur dann als erfüllt, wenn der zugehörige Belegtyp im Re
 | Mengengerüst (`MENGE-*`)            | Test-, Benchmark-, Build- oder Profilbeleg gemäß genannter Dimension                |
 | Übergreifende Anforderungen (`ZB-*`, `MVP-*`, `NONGOAL-*`) | Beleg gemäß thematisch passender Klasse oben (z. B. Funktional, Generator, Architektur); Akzeptanz ist in der Anforderung selbst genannt |
 | Kontext- und Hilfsabschnitte (`LESE-*`, `RISK-*`, `ASSUMP-*`, `GLOSS-*`, `REF-*`) | beschreibend; kein eigener Implementierungsbeleg gefordert. Konsistenz wird über Dokumentenreview geprüft |
+
+Jeder Beleg MUSS die erfüllten `RPC-*`-IDs nennen, damit Anforderungen, Implementierung und Abnahme rückverfolgbar bleiben.
 
 ### RPC-LESE-003 – ID-Schema
 
@@ -128,7 +132,7 @@ Für PKCS#11 sollen Anwendungen dieselben Operationen, Returncodes, Sessions, Ha
 | MUSS   | MVP: Go-Referenzserver mit internem PKCS#11-Backend über `miekg/pkcs11` oder äquivalentes Binding.        |
 | MUSS   | MVP: generierte Go-, Java-, Kotlin- und C#-Client-Stubs für PKCS#11.                                      |
 | MUSS   | MVP: numerische PKCS#11-Returncodes (`CK_RV`) in jeder fachlichen Response erhalten.                      |
-| SOLLTE | Mapping für Mechanism- und Attribute-Parameter typsicher modellieren, soweit die Spec dies zulässt.       |
+| SOLLTE | Mapping für Mechanism- und Attribute-Parameter typsicher modellieren, soweit die Spezifikation dies zulässt. |
 | SOLLTE | Mehrere PKCS#11-Versionen über versionierte Mapping-Profile unterstützen.                                 |
 | SOLLTE | Netzwerk-HSM- und Cloud-HSM-Profile als gleichrangige Domänen dokumentieren und testen.                   |
 | SOLLTE | Eine getrennte Cloud-KMS-RPC-API mit AWS-/GCP-/Azure-kompatiblen Operationen bereitstellen.               |
@@ -183,7 +187,7 @@ Folgende Use Cases MÜSSEN unterstützt werden:
 - **UC-1 PKCS#11 Generate-IDL (MVP)**: Generator erzeugt eine versionierte Protobuf-IDL aus OASIS-Headern und Mapping-Datei.
 - **UC-2 PKCS#11 Generate-Stubs (MVP)**: Generator-Workflow erzeugt Go-, Java-, Kotlin- und C#-Stubs.
 - **UC-3 PKCS#11 List-Slots (MVP)**: Client ruft `C_GetSlotList` und `C_GetTokenInfo` über RPC auf.
-- **UC-4 PKCS#11 Open-Session/Login (MVP)**: Client eröffnet eine Session und meldet sich mit `C_Login` an.
+- **UC-4 PKCS#11 Open-Session/Login (MVP)**: Client eröffnet eine Session und meldet sich gemäß konfiguriertem Credential-Modell mit `C_Login` an.
 - **UC-5 PKCS#11 Find-Object (MVP)**: Client führt `C_FindObjectsInit`/`C_FindObjects`/`C_FindObjectsFinal` aus.
 - **UC-6 PKCS#11 Sign (MVP)**: Client führt `C_SignInit`/`C_Sign` gegen einen privaten HSM-Key aus.
 - **UC-7 PKCS#11 Error-Preservation (MVP)**: Server gibt PKCS#11-Returncodes unverfälscht an den Client zurück.
@@ -246,9 +250,9 @@ Folgende Use Cases SOLLEN unterstützt werden:
 Folgende Vertrauensgrenzen MÜSSEN als solche dokumentiert und in Code/Konfiguration durchgesetzt werden:
 
 - **Client ↔ RPC-Server**: TLS 1.3 MUSS unterstützt werden; mTLS oder ein äquivalentes starkes Client-Authentisierungsverfahren MUSS konfigurierbar sein.
-- **RPC-Server ↔ PKCS#11-HSM / Netzwerk-HSM / Cloud-HSM**: PKCS#11-Modulpfad, Slot-/Token-Auswahl, PIN/Secrets, Vendor-Client-Konfiguration und Netzwerk-Time-outs MÜSSEN serverseitig kontrolliert werden.
+- **RPC-Server ↔ PKCS#11-HSM / Netzwerk-HSM / Cloud-HSM**: PKCS#11-Modulpfad, Slot-/Token-Auswahl, PIN/Secrets, Vendor-Client-Konfiguration und Netzwerk-Timeouts MÜSSEN serverseitig kontrolliert werden.
 - **RPC-Server ↔ Cloud-KMS**: Cloud-Credentials, Provider-Region, Key-Ressourcen und IAM-/RBAC-Berechtigungen MÜSSEN serverseitig kontrolliert werden.
-- **Generator ↔ OASIS-Quellen**: Header- und Spec-Versionen MÜSSEN reproduzierbar gepinnt sein.
+- **Generator ↔ OASIS-Quellen**: Header- und Spezifikationsversionen MÜSSEN reproduzierbar gepinnt sein.
 - **Audit-Sink**: Audit-Ausgabe DARF NICHT PINs, Klartextdaten, private Schlüsselwerte oder unmaskierte Secret-Attribute enthalten.
 
 ---
@@ -267,7 +271,7 @@ Akzeptanz: Golden-File-Test vergleicht die generierte IDL mit einem eingecheckte
 
 Der MVP MUSS einen Go-Referenzserver bereitstellen, der die Kern-API gegen SoftHSM v2 ausführen kann.
 
-Akzeptanz: Ein Integrationstest initialisiert einen SoftHSM-Token, findet einen privaten Schlüssel und erzeugt über RPC eine gültige Signatur.
+Akzeptanz: Ein Integrationstest initialisiert einen SoftHSM-Token, meldet sich gemäß SoftHSM-Profil an, findet einen privaten Schlüssel und erzeugt über RPC eine gültige Signatur.
 
 ### RPC-MVP-003 – Sprach-Stubs
 
@@ -293,17 +297,23 @@ Der MVP MUSS dokumentieren, welche PKCS#11-Funktionen, Mechanisms, Attribute und
 
 Akzeptanz: `docs/compatibility.md` enthält eine maschinenlesbare oder tabellarische Feature-Matrix.
 
+### RPC-MVP-007 – MVP-Abnahme-Trace
+
+Der MVP MUSS einen Trace von `UC-1` bis `UC-7` auf die erfüllenden `RPC-*`-Anforderungen und Abnahmebelege bereitstellen.
+
+Akzeptanz: Ein Dokument oder maschinenlesbares Artefakt im Repository ordnet jeden MVP-Use-Case mindestens einer funktionalen Anforderung und einem Abnahmebeleg zu.
+
 ---
 
 ## 5. Nicht-Ziele und Scope-Grenzen
 
 ### RPC-NONGOAL-001 – Kein ABI-identischer C-Pointer-Transport
 
-`crypto-rpc` ist KEIN Versuch, C-Pointer, Prozessadressen oder C-ABI-Strukturen binär über das Netzwerk zu übertragen. Die Abbildung MUSS semantisch 1:1 sein, nicht ABI-identisch.
+`crypto-rpc` ist kein Versuch, C-Pointer, Prozessadressen oder C-ABI-Strukturen binär über das Netzwerk zu übertragen. Die Abbildung MUSS semantisch 1:1 sein, nicht ABI-identisch.
 
 ### RPC-NONGOAL-002 – Kein vollständiger PKCS#11-Proxy im MVP
 
-Ein C-kompatibles `libpkcs11.so`, das bestehende Anwendungen unverändert laden können, ist NICHT Teil des MVP.
+Ein C-kompatibles `libpkcs11.so`, das bestehende Anwendungen unverändert laden können, ist nicht Teil des MVP.
 
 ### RPC-NONGOAL-003 – Kein HSM-Vendor-SDK
 
@@ -311,7 +321,7 @@ Das Projekt DARF vendor-spezifische APIs NICHT als implizite Ersatzsemantik für
 
 ### RPC-NONGOAL-004 – Kein Key-Management-System
 
-`crypto-rpc` ist KEIN vollwertiges Key-Management-System. Schlüssel-Lifecycle-Funktionen werden nur soweit bereitgestellt, wie sie in der jeweiligen Domäne (PKCS#11, Cloud-KMS, Netzwerk-HSM, Cloud-HSM) fachlich vorgesehen sind.
+`crypto-rpc` ist kein vollwertiges Key-Management-System. Schlüssel-Lifecycle-Funktionen werden nur soweit bereitgestellt, wie sie in der jeweiligen Domäne (PKCS#11, Cloud-KMS, Netzwerk-HSM, Cloud-HSM) fachlich vorgesehen sind.
 
 ### RPC-NONGOAL-005 – Keine Verheimlichung von PKCS#11-Komplexität
 
@@ -357,7 +367,7 @@ PKCS#11-Handles (`CK_SESSION_HANDLE`, `CK_OBJECT_HANDLE`) MÜSSEN im RPC als opa
 
 Der Generator MUSS PKCS#11-Typen, Konstanten, Structs und Funktionssignaturen aus OASIS-Headern extrahieren.
 
-#### RPC-FA-GEN-002 – Spec-/Mapping-Ergänzung
+#### RPC-FA-GEN-002 – Spezifikations-/Mapping-Ergänzung
 
 Der Generator MUSS eine gepflegte Mapping-Datei verarbeiten, die Parameter-Richtung, Buffer-Längenpaare, Sonderfälle und nicht transportierbare C-Konzepte beschreibt.
 
@@ -415,6 +425,10 @@ Der Server MUSS Session-Handles einem authentisierten Client-Kontext oder einer 
 
 Sessions SOLLTEN eine konfigurierbare Idle-Timeout-Lease besitzen, damit verlorene Clients keine HSM-Sessions dauerhaft binden.
 
+#### RPC-FA-SESSION-003 – Login-Credential-Modell
+
+`C_Login` MUSS die PKCS#11-Login-Semantik erhalten. Produktive Profile MÜSSEN PINs und HSM-Credentials serverseitig über konfigurierte Secret-Quellen oder serverseitig auflösbare Credential-Referenzen bereitstellen. Die Übertragung roher PIN-Werte im RPC DARF nur in explizit dokumentierten Entwicklungs- oder Testprofilen erlaubt sein.
+
 #### RPC-FA-OBJ-001 – Object-Handles
 
 Object-Handles MÜSSEN nur in der Session und dem Serverkontext gültig sein, in dem sie erzeugt oder gefunden wurden.
@@ -439,7 +453,7 @@ Nicht unterstützte Mechanisms MÜSSEN mit dem vom PKCS#11-Backend gelieferten R
 
 #### RPC-FA-CRYPTO-004 – Private-Key-Schutz
 
-Private Schlüsselwerte DÜRFEN durch keine RPC-Funktion exportiert werden, sofern das PKCS#11-Backend sie nicht ausdrücklich als lesbar/extrahierbar zurückgibt. Der Server DARF sensible Attribute nicht zusätzlich loggen oder cachen.
+Private Schlüsselwerte und Secret-Key-Werte DÜRFEN durch keine RPC-Funktion exportiert werden, sofern das PKCS#11-Backend sie als sensitiv oder nicht extrahierbar markiert. Für extrahierbare private oder geheime Attribute MUSS ein expliziter serverseitiger Policy-Schalter erforderlich sein; der Default MUSS die Rückgabe ablehnen. Der Server DARF sensible Attribute nicht zusätzlich loggen oder cachen.
 
 ### 6.7 Fehler und Auditierung
 
@@ -453,7 +467,7 @@ Der Server SOLL jede kryptografische Operation mit Zeitstempel, Client-Identitä
 
 #### RPC-FA-AUDIT-002 – Geheimnisverbot
 
-Audit-Logs DÜRFEN NIE PINs, Klartextdaten, private Schlüsselwerte, Secret-Key-Werte oder rohe Signatur-Inputs enthalten.
+Audit-Logs DÜRFEN NICHT PINs, Klartextdaten, private Schlüsselwerte, Secret-Key-Werte oder rohe Signatur-Inputs enthalten.
 
 ### 6.8 Backend-Profile
 
@@ -499,7 +513,7 @@ Das Projekt MUSS C#/.NET-Stubs generieren und einen .NET-Client-Build im CI prü
 
 ### RPC-API-CFG-001 – Server-Konfiguration
 
-Der Server MUSS mindestens Modulpfad, Token-/Slot-Auswahl, PIN-Quelle, TLS-Konfiguration, Session-Limits und Logging/Audit-Ziel konfigurierbar machen.
+Der Server MUSS mindestens Modulpfad, Token-/Slot-Auswahl, Secret- und Credential-Quellen, TLS-Konfiguration, Session-Limits und Logging/Audit-Ziel konfigurierbar machen.
 
 ### RPC-API-CFG-002 – Backend-Profile
 
@@ -549,7 +563,7 @@ Der Server MUSS mindestens ein starkes Client-Authentisierungsverfahren unterst�
 
 #### RPC-NFA-SEC-003 – PIN-Handling
 
-PINs und HSM-Credentials MÜSSEN aus externen Secret-Quellen geladen werden können und DÜRFEN NICHT in Logs, Metriken, Traces oder Fehlermeldungen erscheinen.
+PINs und HSM-Credentials MÜSSEN aus externen Secret-Quellen geladen werden können und DÜRFEN NICHT in Logs, Metriken, Traces oder Fehlermeldungen erscheinen. Produktive Profile MÜSSEN rohe PIN-Werte in RPC-Requests ablehnen; Entwicklungs- und Testprofile DÜRFEN sie nur nach expliziter Opt-in-Konfiguration akzeptieren.
 
 #### RPC-NFA-SEC-004 – Autorisierung
 
@@ -558,6 +572,10 @@ Der Server MUSS Autorisierungsentscheidungen pro authentisiertem Client-Kontext 
 #### RPC-NFA-SEC-005 – Supply Chain
 
 Builds SOLLEN SBOM, Dependency-Scanning und reproduzierbare Generator-Artefakte bereitstellen.
+
+#### RPC-NFA-SEC-006 – Secret- und Klartextlebensdauer
+
+Der Server MUSS PINs, HSM-Credentials, Klartextdaten und rohe Signatur-Inputs nur so lange im Speicher halten, wie sie für die jeweilige Operation erforderlich sind. Persistentes Speichern, Caching und Ausgabe in Panic-/Crash-Dumps MÜSSEN verhindert oder nachweisbar redigiert werden.
 
 ### 8.4 Observability und Betrieb
 
@@ -669,6 +687,10 @@ Für Netzwerk-HSM-Betrieb MUSS das Projekt dokumentieren, welche Dateien, Umgebu
 
 Für Cloud-KMS-Profile SOLLTE das Projekt dokumentieren, wie Provider-Credentials, Region/Location, Key-Ressourcen und IAM-/RBAC-Berechtigungen bereitgestellt werden.
 
+### RPC-ENV-005 – Cloud-HSM-Betrieb
+
+Für Cloud-HSM-Profile MUSS das Projekt dokumentieren, welche Cluster-Endpunkte, Client-Libraries, Zertifikate, Trust Anchors, Netzwerkfreigaben, Provider-Identitäten und IAM-/RBAC-Berechtigungen für den Betrieb erforderlich sind.
+
 ### RPC-OPS-MON-001 – Prometheus
 
 Metriken SOLLTEN in einem Prometheus-kompatiblen Format exportiert werden.
@@ -689,7 +711,7 @@ Akzeptanz: Ein Quellenmanifest im Repository dokumentiert Spezifikationsversion,
 
 ### RPC-COMP-002 – Lizenz- und Quellennachweis
 
-Übernommene Header, generierte Artefakte und Spec-Auszüge MÜSSEN lizenzkonform dokumentiert werden.
+Übernommene Header, generierte Artefakte und Spezifikationsauszüge MÜSSEN lizenzkonform dokumentiert werden.
 
 ### RPC-COMP-003 – Kryptografische Compliance
 
@@ -795,7 +817,7 @@ Cloud-KMS-, Netzwerk-HSM- und Cloud-HSM-Domänen sind gleichrangige Ziel-Domäne
 
 Der MVP nimmt PKCS#11 v3.2 (siehe `RPC-REF-001`) als verbindliche Spezifikations-Baseline an. Header und Spezifikationsdokumente werden in genau dieser Version gepinnt verwendet (`RPC-COMP-001`, `RPC-FA-GEN-004`).
 
-PKCS#11 v2.40 ist kein MVP-Ziel; eine Unterstützung erfolgt – wenn überhaupt – ausschließlich über ein separates, klar gekennzeichnetes Generator-Profil und blockiert die MVP-Abnahme nicht. Vendor-Erweiterungen außerhalb der OASIS-Spec sind durch `RPC-NONGOAL-003` ausgeschlossen, solange sie nicht über einen expliziten Extension-Namespace eingeführt werden.
+PKCS#11 v2.40 ist kein MVP-Ziel; eine Unterstützung erfolgt – wenn überhaupt – ausschließlich über ein separates, klar gekennzeichnetes Generator-Profil und blockiert die MVP-Abnahme nicht. Vendor-Erweiterungen außerhalb der OASIS-Spezifikation sind durch `RPC-NONGOAL-003` ausgeschlossen, solange sie nicht über einen expliziten Extension-Namespace eingeführt werden.
 
 ---
 
@@ -815,15 +837,15 @@ Go-, Java-, Kotlin- und C#-Clients MÜSSEN mindestens einen Smoke-Test gegen den
 
 ### RPC-ACCEPT-004 – Security-Abnahme
 
-Ein Review MUSS bestätigen, dass PINs, private Schlüsselwerte und sensitive Attribute nicht geloggt, gemessen oder in Fehlerdetails ausgegeben werden. Zusätzlich MUSS mindestens ein automatisierter Negativtest repräsentative Logs, Metriken oder Fehlerdetails auf diese Geheimnisse prüfen.
+Ein Review MUSS bestätigen, dass PINs, HSM-Credentials, private Schlüsselwerte, Secret-Key-Werte und sensitive Attribute nicht geloggt, gemessen, gecacht oder in Fehlerdetails ausgegeben werden. Zusätzlich MUSS mindestens ein automatisierter Negativtest repräsentative Logs, Metriken oder Fehlerdetails auf diese Geheimnisse prüfen.
 
 ### RPC-ACCEPT-005 – Betriebsabnahme
 
 Ein lokaler Runbook-Test MUSS den Server gegen SoftHSM starten, Readiness prüfen und eine Demo-Operation ausführen.
 
-### RPC-ACCEPT-006 – Netzwerk-HSM-Profilabnahme
+### RPC-ACCEPT-006 – Netzwerk-/Cloud-HSM-Profilabnahme
 
-Für jedes als produktionsfähig deklarierte Netzwerk-HSM-Profil MUSS ein dokumentierter Smoke-Test Slots listen, eine Session öffnen, einen Login durchführen und eine Signatur oder `C_GenerateRandom` erfolgreich ausführen.
+Für jedes als produktionsfähig deklarierte Netzwerk-HSM- oder Cloud-HSM-Profil MUSS ein dokumentierter Smoke-Test Slots listen, eine Session öffnen, einen Login durchführen und eine Signatur oder `C_GenerateRandom` erfolgreich ausführen.
 
 ### RPC-ACCEPT-007 – Cloud-KMS-Profilabnahme
 
@@ -863,6 +885,7 @@ Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cl
 | CK_RV | PKCS#11-Returncode (`CK_RETURN_VALUE`) als numerischer Statuswert einer Funktion. |
 | Cloud-HSM | Cloud-Dienst, der HSM-Cluster bereitstellt und häufig PKCS#11-Client-Libraries anbietet. |
 | Cloud-KMS | Cloud-Dienst mit ressourcenorientierter Key-Management- und Kryptografie-API, meist ohne PKCS#11-Sessions und Handles. |
+| Credential-Referenz | Nicht geheimer Verweis auf ein serverseitig konfiguriertes oder extern auflösbares Secret. |
 | gRPC | RPC-Framework auf Basis von HTTP/2 und Protobuf, im Projekt primärer Transport. |
 | IAM/RBAC | Identity & Access Management bzw. Role-Based Access Control; Berechtigungsmodelle in Cloud- und Plattformsystemen. |
 | IDL | Interface Definition Language, hier Protobuf. |
@@ -875,6 +898,7 @@ Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cl
 | Opaque Handle | Numerischer Wert, dessen Bedeutung nur der Server kennt. |
 | PKCS#11 | Standardisierte API für kryptografische Tokens und HSMs. |
 | SBOM | Software Bill of Materials; maschinenlesbare Liste eingesetzter Abhängigkeiten und Lizenzen. |
+| Secret-Quelle | Externes System oder lokale Konfiguration, aus der PINs, Tokens, Zertifikate oder Provider-Credentials geladen werden. |
 | Semantisch 1:1 | Gleiche fachliche Operation und Fehlersemantik, aber transportgerechte Datentypen statt C-Pointer. |
 
 ---
@@ -886,7 +910,7 @@ Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cl
 - OASIS PKCS#11 Specification v3.2 – https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/
 - OASIS PKCS#11 GitHub Repository – https://github.com/oasis-tcs/pkcs11
 - OASIS PKCS#11 Header (Upstream, im Quellenmanifest zu pinnen) – https://github.com/oasis-tcs/pkcs11/tree/master/working/headers
-- OASIS PKCS#11 Spec Markdown (Upstream, im Quellenmanifest zu pinnen) – https://github.com/oasis-tcs/pkcs11/tree/master/working/doc/spec
+- OASIS PKCS#11 Specification Markdown (Upstream, im Quellenmanifest zu pinnen) – https://github.com/oasis-tcs/pkcs11/tree/master/working/doc/spec
 - AWS KMS API Reference – https://docs.aws.amazon.com/kms/latest/APIReference/
 - Google Cloud KMS API Reference – https://cloud.google.com/kms/docs/reference/rest/
 - Azure Key Vault Keys REST API – https://learn.microsoft.com/en-us/rest/api/keyvault/keys/
@@ -895,7 +919,7 @@ Der MVP MUSS mindestens ein SoftHSM-/PKCS#11-Profil enthalten. Netzwerk-HSM-, Cl
 
 ### RPC-REF-002 – Begleitdokumente
 
-- [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation (geplant)
-- [spec/architecture.md](architecture.md) – Architekturüberblick und Komponentensicht (geplant)
+- [spec/spezifikation.md](spezifikation.md) – Technische Spezifikation
+- [spec/architecture.md](architecture.md) – Architekturüberblick und Komponentensicht
 - `docs/compatibility.md` – Kompatibilitätsmatrix (geplant)
 - `docs/mapping.md` – Mapping-Regeln (geplant)

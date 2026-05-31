@@ -2,7 +2,7 @@
 
 **Status:** Entwurf
 **Datum:** 2026-05-31
-**Bezug:** [Lastenheft](../../../../spec/lastenheft.md) (`RPC-MVP-001…006`, `RPC-ZB-003`, `RPC-FA-BACKEND-*`)
+**Bezug:** [Lastenheft](../../../../spec/lastenheft.md) (`RPC-MVP-001…007`, `RPC-ZB-003`, `RPC-FA-BACKEND-*`)
 
 Lebende Roadmap-Skizze. Die Reihenfolge der Meilensteine ist Vorschlag,
 nicht vertraglich; Lastenheft-Anforderungen sind verbindlich.
@@ -11,7 +11,7 @@ nicht vertraglich; Lastenheft-Anforderungen sind verbindlich.
 
 ## M1 — PKCS#11-MVP
 
-Liefert die MVP-Anforderungen aus `RPC-MVP-001…006` gegen SoftHSM v2
+Liefert die MVP-Anforderungen aus `RPC-MVP-001…007` gegen SoftHSM v2
 (`RPC-LESE-006`):
 
 - Generator für Kern-API aus OASIS-Headern (`RPC-MVP-001`, `RPC-FA-GEN-*`)
@@ -21,6 +21,7 @@ Liefert die MVP-Anforderungen aus `RPC-MVP-001…006` gegen SoftHSM v2
 - `CK_RV`-Treue (`RPC-MVP-004`, `RPC-FA-P11-003`)
 - Session-/Handle-State über RPC-Calls (`RPC-MVP-005`, `RPC-FA-SESSION-*`)
 - Kompatibilitätsmatrix (`RPC-MVP-006`, `docs/compatibility.md`)
+- MVP-Abnahme-Trace (`RPC-MVP-007`)
 
 Abnahme: `RPC-ACCEPT-001…005`.
 
@@ -33,8 +34,8 @@ und Operations-Notizen (`RPC-ENV-003`).
 ## M3 — Cloud-HSM-Profil
 
 Cloud-HSM-Cluster-Profil (z. B. AWS CloudHSM) über die PKCS#11-API-
-Familie gemäß `RPC-FA-BACKEND-002`; Smoke-Test analog `RPC-ACCEPT-006`,
-plus IAM-/RBAC- und Cluster-Konfigurationsdoku.
+Familie gemäß `RPC-FA-BACKEND-002`; Smoke-Test gemäß `RPC-ACCEPT-006`,
+plus IAM-/RBAC- und Cluster-Konfigurationsdoku (`RPC-ENV-005`).
 
 ## M4 — Cloud-KMS-API-Familie
 
