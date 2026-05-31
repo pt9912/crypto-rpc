@@ -21,7 +21,7 @@ In diesem Dokument haben die in Großbuchstaben geschriebenen Schlüsselwörter 
 
 - **MUSS** / **MÜSSEN** – verbindliche Anforderung für den zugeordneten Abnahmestand.
 - **DARF NICHT** / **DÜRFEN NICHT** – ausdrücklich ausgeschlossen.
-- **SOLLTE** / **SOLLEN** – geplante Eigenschaft; Abweichungen müssen begründet und dokumentiert werden.
+- **SOLL** / **SOLLEN** / **SOLLTE** / **SOLLTEN** – geplante Eigenschaft im Sinne von RFC-2119-`SHOULD`; die Formen sind normativ gleichwertig. Abweichungen müssen begründet und dokumentiert werden.
 - **KANN** / **KÖNNEN** – optionale Eigenschaft ohne Abnahmeverpflichtung.
 
 Klein geschriebene Formen ("muss", "soll", "kann") sind beschreibend und nicht normativ.
@@ -34,7 +34,7 @@ MVP-blockierend sind ausschließlich:
 - Use Cases mit Kennzeichnung `(MVP)`,
 - die Abnahmekriterien `RPC-ACCEPT-001`, `RPC-ACCEPT-002`, `RPC-ACCEPT-003`, `RPC-ACCEPT-004`, `RPC-ACCEPT-005`, `RPC-ACCEPT-008` und `RPC-ACCEPT-009`.
 
-`SOLLTE`- und `KANN`-Anforderungen blockieren die MVP-Abnahme nicht, auch wenn sie den MVP erwähnen.
+`SOLL`-/`SOLLTE`- und `KANN`-Anforderungen blockieren die MVP-Abnahme nicht, auch wenn sie den MVP erwähnen.
 
 `RPC-ACCEPT-006` und `RPC-ACCEPT-007` sind nur für als produktionsfähig deklarierte Netzwerk-/Cloud-HSM- oder Cloud-KMS-Profile abnahmebindend. Sie blockieren den MVP nicht, solange solche Profile nicht ausdrücklich in den MVP-Release-Scope aufgenommen werden.
 
@@ -338,9 +338,15 @@ Akzeptanz: `docs/compatibility.md` enthält eine maschinenlesbare oder tabellari
 
 ### RPC-MVP-007 – MVP-Abnahme-Trace
 
-Der MVP MUSS einen Trace von `UC-1` bis `UC-7` auf die erfüllenden `RPC-*`-Anforderungen und Abnahmebelege bereitstellen.
+Der MVP MUSS einen Trace von `UC-1` bis `UC-7` auf die erfüllenden `RPC-*`-Anforderungen und Abnahmebelege bereitstellen. Die 19 MVP-Funktionen aus `RPC-MVP-001`, die nicht als eigener Use Case benannt sind, MÜSSEN im Trace mindestens über `RPC-MVP-001`, `RPC-ACCEPT-001` und den zugehörigen Funktionsnachweis abgebildet werden.
 
-Akzeptanz: Ein Dokument oder maschinenlesbares Artefakt im Repository ordnet jeden MVP-Use-Case mindestens einer funktionalen Anforderung und einem Abnahmebeleg zu.
+Akzeptanz: Ein Dokument oder maschinenlesbares Artefakt im Repository ordnet jeden MVP-Use-Case und jede der 19 MVP-Funktionen mindestens einer funktionalen Anforderung und einem Abnahmebeleg zu.
+
+### RPC-MVP-008 – MVP-Transportprofil
+
+Der MVP MUSS mindestens gRPC als lauffähiges Transportprofil für die funktionale und betriebliche Abnahme bereitstellen. TCP-RPC ist Produktziel gemäß `RPC-API-TRANSPORT-001`, blockiert die MVP-Abnahme aber nicht, solange TCP-RPC nicht ausdrücklich in den MVP-Release-Scope aufgenommen wird.
+
+Akzeptanz: `RPC-ACCEPT-001` und `RPC-ACCEPT-005` laufen mindestens über gRPC. Wird TCP-RPC ausdrücklich in den MVP-Release-Scope aufgenommen, MÜSSEN zusätzlich `RPC-API-TRANSPORT-002`, `RPC-API-TRANSPORT-003` und die TCP-RPC-Cancellation-Anforderung aus `RPC-FA-RPC-003` für die MVP-Abnahme belegt werden.
 
 ---
 
@@ -406,7 +412,7 @@ PKCS#11-Handles (`CK_SESSION_HANDLE`, `CK_OBJECT_HANDLE`) MÜSSEN im RPC als opa
 
 #### RPC-FA-IDL-006 – Größen- und Streaming-Grenzen
 
-Die IDL MUSS für Byte-Felder und wiederholte Felder Größenlimits explizit ausweisen. Zulässige Mechanismen sind dokumentierte IDL-Optionen, normative Kommentar-Annotationen direkt am Feld oder ein Verweis auf eine zentrale Limit-Tabelle gemäß `RPC-MENGE-005`. Der gewählte Mechanismus MUSS für ein RPC Surface Profile einheitlich sein. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
+Die IDL MUSS für Byte-Felder und wiederholte Felder Größenlimits explizit ausweisen. Zulässige Mechanismen sind dokumentierte IDL-Optionen, normative Kommentar-Annotationen direkt am Feld oder ein Verweis auf eine zentrale Limit-Tabelle gemäß `RPC-MENGE-005`. Wenn Kommentar-Annotationen verwendet werden, MUSS deren Format dokumentiert und durch Generator oder CI validiert werden. Der gewählte Mechanismus MUSS für ein RPC Surface Profile einheitlich sein. Der Server MUSS diese Limits durchsetzen. Operationen, die diese Limits überschreiten können, SOLLEN eine Multi-Part- oder Streaming-Variante erhalten, statt unbegrenzte `bytes`-Felder zu erzwingen.
 
 #### RPC-FA-IDL-007 – Einschränkbarer PKCS#11-RPC-Surface
 
@@ -548,7 +554,7 @@ Das Projekt MUSS zwischen Transportfehlern, Authentisierungs-/Autorisierungsfehl
 
 #### RPC-FA-AUDIT-001 – Audit-Pflichtfelder
 
-Der Server SOLL jede kryptografische Operation mit Zeitstempel, Client-Identität, Funktion, Slot/Token, Session-ID, Mechanism, Key-Identifier soweit verfügbar, `CK_RV` und Latenz auditieren.
+Der Server SOLL jede kryptografische Operation mit Zeitstempel, Client-Identität, Funktion, Slot/Token, Session-ID, Mechanism, Key-Identifier soweit verfügbar, `CK_RV` und Latenz auditieren. Welche Felder pro Profil Pflichtfelder, optionale Felder oder nicht verfügbar sind, MUSS gemäß `RPC-FA-AUDIT-003` im Profil festgelegt werden; insbesondere MUSS begründet sein, wann ein Key-Identifier als nicht verfügbar gilt.
 
 #### RPC-FA-AUDIT-002 – Geheimnisverbot
 
@@ -590,7 +596,7 @@ Die Protobuf-IDL MUSS versionierte Pakete verwenden, z. B. `cryptorpc.pkcs11.v1`
 
 ### RPC-API-TRANSPORT-001 – Transportprofile
 
-Der RPC-Server MUSS mindestens zwei Transportprofile unterstützen: gRPC und TCP-RPC (Technologiebezug siehe `RPC-TECH-002`). Beide Transportprofile MÜSSEN dieselbe fachliche PKCS#11-RPC-Semantik, dieselben `CK_RV`-Response-Regeln, dieselben Authentisierungs-/Autorisierungsentscheidungen und dieselben Auditpflichten verwenden.
+Der RPC-Server MUSS im produktweiten Zielzustand mindestens zwei Transportprofile unterstützen: gRPC und TCP-RPC (Technologiebezug siehe `RPC-TECH-002`). Beide Transportprofile MÜSSEN dieselbe fachliche PKCS#11-RPC-Semantik, dieselben `CK_RV`-Response-Regeln, dieselben Authentisierungs-/Autorisierungsentscheidungen und dieselben Auditpflichten verwenden. Für den MVP gilt der eingeschränkte Transport-Scope aus `RPC-MVP-008`; TCP-RPC-Anforderungen werden nur MVP-blockierend, wenn TCP-RPC ausdrücklich in den MVP-Release-Scope aufgenommen wird.
 
 ### RPC-API-TRANSPORT-002 – TCP-RPC-Framing
 
@@ -620,14 +626,16 @@ Für `security=mtls` MUSS `identity.source=mtls-subject` oder eine dokumentierte
 
 `identity.source=none` bedeutet einen explizit anonymen, nicht authentisierten Principal und DARF nur in lokalem Entwicklungs-, Test- oder klar dokumentiertem Single-Tenant-Betrieb verwendet werden. Ein als produktionsfähig deklariertes Profil DARF `identity.source=none` NICHT verwenden, wenn es mehrere Clients, clientbezogene Autorisierung, clientbezogene Session-Isolation oder auditierbare Client-Identitäten zusagt. Produktionsfähig deklarierte Profile MÜSSEN eine authentisierte Identitätsquelle konfigurieren, z. B. `mtls-subject`, `header` mit Peer-Allowlist oder einen in der Technischen Spezifikation definierten gleichwertigen Authentisierungsmechanismus. Client-spezifische Policies und Session-Isolation DÜRFEN mit `identity.source=none` nicht als erfüllt deklariert werden.
 
+`security=tls` ohne mTLS authentisiert nur den Server gegenüber dem Client und begründet für sich keine Client-Identität. Im initialen Scope DARF `security=tls` ohne mTLS deshalb nur mit `identity.source=none` betrieben werden und DARF in produktionsfähig deklarierten Profilen keine clientbezogenen Sicherheitszusagen erfüllen. Zusätzliche applikative Client-Authentisierungsmechanismen für serverseitiges TLS, z. B. Token- oder JWT-basierte Verfahren, KÖNNEN später nur über eine explizite Spezifikationsänderung mit eigenem Identitätsquellenwert eingeführt werden.
+
 ### RPC-API-TRANSPORT-007 – Betriebsmodi für Terminierung
 
 Das Projekt MUSS mindestens folgende Transport-Security-Betriebsmodi dokumentieren:
 
 | Modus | Beispiel | TLS/mTLS-Terminierung | Identitätsquelle |
 | ----- | -------- | --------------------- | ---------------- |
-| Direkt ohne TLS | lokaler Test, Entwicklungsprofil | keine | `none` oder profilabhängiger Auth-Mechanismus |
-| Direkt mit TLS | Bare-Container oder Kubernetes ohne Mesh | Server | `none` oder profilabhängiger Auth-Mechanismus |
+| Direkt ohne TLS | lokaler Test, Entwicklungsprofil | keine | `none`; keine clientbezogene Sicherheitszusage ohne zusätzliche spezifizierte Identitätsquelle |
+| Direkt mit TLS | Bare-Container oder Kubernetes ohne Mesh | Server | `none`; keine clientbezogene Sicherheitszusage ohne zusätzliche spezifizierte Identitätsquelle |
 | Direkt mit mTLS | Bare-Container, Kubernetes ohne Mesh oder L4-Passthrough-Mesh | Server | `mtls-subject` |
 | External Termination | L7-Service-Mesh, Sidecar oder Reverse Proxy | externer Proxy | `header` plus Peer-Allowlist |
 
@@ -786,6 +794,8 @@ crypto-rpc/
   docs/
   spec/
 ```
+
+`proto/kms/` und `server/kms-go/` sind Zielstruktur für die post-MVP Cloud-KMS-Domäne. Sie müssen im MVP nicht vorhanden sein, solange Cloud-KMS nicht in den Release-Scope aufgenommen ist.
 
 Netzwerk-HSM- und Cloud-HSM-Backends werden nicht als eigene Serverpakete geführt, sondern über Profile in `profiles/` an `server/pkcs11-go/` angeschlossen, solange sie über eine PKCS#11-Client-Library zugänglich sind (`RPC-PUE-004`, `RPC-FA-BACKEND-001`, `RPC-FA-BACKEND-002`). Eine eigene Serverkomponente außerhalb von `server/pkcs11-go/` MUSS erst entstehen, wenn ein Backend nachweislich keine PKCS#11-Semantik mehr trägt; eine solche Änderung MUSS über einen Architekturentscheid begründet werden.
 
@@ -1011,9 +1021,11 @@ PKCS#11 v2.40 ist kein MVP-Ziel; eine Unterstützung erfolgt – wenn überhaupt
 
 ## 16. Abnahmekriterien
 
+`RPC-ACCEPT-001`, `RPC-ACCEPT-002`, `RPC-ACCEPT-003`, `RPC-ACCEPT-004`, `RPC-ACCEPT-005`, `RPC-ACCEPT-008` und `RPC-ACCEPT-009` sind MVP-blockierend gemäß `RPC-LESE-001`. `RPC-ACCEPT-006` und `RPC-ACCEPT-007` sind nur für als produktionsfähig deklarierte Netzwerk-/Cloud-HSM- oder Cloud-KMS-Profile abnahmebindend.
+
 ### RPC-ACCEPT-001 – Funktionale Abnahme
 
-Ein automatisierter Test MUSS über RPC gegen SoftHSM die 19 MVP-Funktionen aus `RPC-MVP-001` abdecken. Der Test MUSS mindestens initialisieren, Informationen zu Library, Slots, Token und Mechanisms abrufen, eine Session öffnen, Login durchführen, Attribute eines bekannten Objekts abfragen, einen Key finden, eine Signatur erzeugen, Zufallsbytes erzeugen, Logout durchführen, die Session schließen und finalisieren. Für jede MVP-Funktion MUSS der Test entweder `CKR_OK` oder einen bewusst provozierten, fachlich erwarteten `CK_RV` prüfen.
+Ein automatisierter Test MUSS über das MVP-Transportprofil aus `RPC-MVP-008` gegen SoftHSM die 19 MVP-Funktionen aus `RPC-MVP-001` abdecken. Der Test MUSS mindestens initialisieren, Informationen zu Library, Slots, Token und Mechanisms abrufen, eine Session öffnen, Login durchführen, Attribute eines bekannten Objekts abfragen, einen Key finden, eine Signatur erzeugen, Zufallsbytes erzeugen, Logout durchführen, die Session schließen und finalisieren. Für jede MVP-Funktion MUSS der Test entweder `CKR_OK` oder einen bewusst provozierten, fachlich erwarteten `CK_RV` prüfen.
 
 ### RPC-ACCEPT-002 – Generator-Abnahme
 
@@ -1025,11 +1037,11 @@ Go-, Java-, Kotlin- und C#-Artefakte MÜSSEN mindestens einen Client-Smoke-Test 
 
 ### RPC-ACCEPT-004 – Security-Abnahme
 
-Ein Review MUSS bestätigen, dass PINs, HSM-Credentials, private Schlüsselwerte, Secret-Key-Werte und sensitive Attribute nicht geloggt, gemessen, gecacht oder in Fehlerdetails ausgegeben werden. Zusätzlich MUSS mindestens ein automatisierter Negativtest repräsentative Logs, Metriken oder Fehlerdetails auf diese Geheimnisse prüfen.
+Ein Review MUSS bestätigen, dass PINs, HSM-Credentials, private Schlüsselwerte, Secret-Key-Werte und sensitive Attribute nicht geloggt, gemessen, gecacht oder in Fehlerdetails ausgegeben werden. Zusätzlich MUSS mindestens ein automatisierter Negativtest einen lauffähigen MVP-Referenzserverpfad mit repräsentativen Operationen ausführen und die dabei erzeugten Logs, Metriken und Fehlerdetails auf diese Geheimnisse prüfen. Ein leerer oder deaktivierter Audit-Sink allein erfüllt dieses Kriterium nicht. Der MVP-Referenzserver MUSS die Geheimnisverbote aus `RPC-FA-AUDIT-002`, `RPC-NFA-SEC-003` und `RPC-NFA-OBS-003` auch dann einhalten, wenn kein dedizierter Audit-Sink aktiviert ist.
 
 ### RPC-ACCEPT-005 – Betriebsabnahme
 
-Ein lokaler Runbook-Test MUSS den Server gegen SoftHSM starten, Readiness prüfen und eine Demo-Operation ausführen.
+Ein lokaler Runbook-Test MUSS den Server gegen SoftHSM starten, Readiness prüfen und eine Demo-Operation über das MVP-Transportprofil aus `RPC-MVP-008` ausführen.
 
 ### RPC-ACCEPT-006 – Netzwerk-/Cloud-HSM-Profilabnahme
 
@@ -1057,7 +1069,7 @@ Der MVP umfasst genau die im MVP Surface Profile als `include` markierten 19 PKC
 
 ### RPC-MENGE-002 – Sessions
 
-Der MVP SOLL mindestens 32 parallele Sessions in der Referenzumgebung verwalten können.
+Die Mengenschwelle für parallele MVP-Sessions wird ausschließlich in `RPC-NFA-PERF-002` definiert. Das Mengengerüst übernimmt diese SOLL-Zielmarke und führt keine eigene abweichende Schwelle.
 
 ### RPC-MENGE-003 – Stub-Sprachen
 
@@ -1106,6 +1118,7 @@ Der MVP MUSS Default-Limits für maximale Request-Größe, maximale Response-Gr�
 | SBOM | Software Bill of Materials; maschinenlesbare Liste eingesetzter Abhängigkeiten und Lizenzen. |
 | Secret-Quelle | Externes System oder lokale Konfiguration, aus der PINs, Tokens, Zertifikate oder Provider-Credentials geladen werden. |
 | Semantisch 1:1 | Gleiche fachliche Operation und Fehlersemantik, aber transportgerechte Datentypen statt C-Pointer. |
+| Single-Tenant | Betriebsprofil, in dem genau ein fachlicher Client- oder Mandantenkontext den Server nutzt und keine clientbezogene Isolation, Autorisierung oder Audit-Zuordnung zwischen mehreren Clients zugesagt wird. |
 | Signing Oracle | Missbrauchsmuster, bei dem ein Dienst wiederholt Signaturen für vom Angreifer gewählte Daten erzeugt. |
 | Sticky-Session | Lastverteilungsstrategie, bei der ein Client für die Dauer einer Session demselben Server-Replica zugeordnet bleibt, damit lokal gehaltene Session-Handles wiederverwendbar sind. |
 | TCP-RPC | Eigenes, framing-basiertes RPC-Transportprofil über TCP mit optionalem TLS/mTLS und derselben fachlichen Semantik wie das gRPC-Profil. |
